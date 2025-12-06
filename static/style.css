@@ -1,0 +1,355 @@
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+    color: #1f2937;
+}
+
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 16px;
+    padding: 40px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+/* Header */
+header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+h1 {
+    font-size: 2.5em;
+    color: #667eea;
+    margin-bottom: 10px;
+}
+
+.subtitle {
+    color: #6b7280;
+    font-size: 1.1em;
+}
+
+/* Warning Banner */
+.warning-banner {
+    background: #fef3c7;
+    border-left: 4px solid #f59e0b;
+    padding: 16px;
+    margin-bottom: 30px;
+    border-radius: 8px;
+    color: #92400e;
+}
+
+/* Form Sections */
+.form-section {
+    margin-bottom: 30px;
+    padding: 20px;
+    background: #f9fafb;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+}
+
+.form-section h2 {
+    color: #374151;
+    margin-bottom: 20px;
+    font-size: 1.3em;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group select {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 1em;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.form-group small {
+    display: block;
+    margin-top: 6px;
+    color: #6b7280;
+    font-size: 0.85em;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.radio-group {
+    display: flex;
+    gap: 20px;
+}
+
+.radio-group label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: normal;
+}
+
+/* Button */
+.btn-calculate {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.2em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-calculate:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-calculate:active {
+    transform: translateY(0);
+}
+
+/* Results Section */
+.results {
+    margin-top: 40px;
+    padding-top: 40px;
+    border-top: 3px solid #667eea;
+}
+
+.results h2 {
+    color: #667eea;
+    margin-bottom: 20px;
+    font-size: 1.8em;
+}
+
+.result-card {
+    background: #f9fafb;
+    border-radius: 12px;
+    padding: 30px;
+    border: 1px solid #e5e7eb;
+}
+
+.result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.result-header h3 {
+    font-size: 1.5em;
+    color: #374151;
+}
+
+/* Risk Badge */
+.risk-badge {
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.9em;
+    text-transform: uppercase;
+}
+
+.risk-badge.strong {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.risk-badge.borderline {
+    background: #fed7aa;
+    color: #92400e;
+}
+
+.risk-badge.weak {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+/* Metrics Grid */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.metric {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    border: 2px solid #e5e7eb;
+}
+
+.metric.highlight {
+    border-color: #667eea;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+}
+
+.metric label {
+    display: block;
+    color: #6b7280;
+    font-weight: 600;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    font-size: 0.85em;
+    letter-spacing: 0.5px;
+}
+
+.metric-value {
+    font-size: 2em;
+    font-weight: 700;
+    color: #374151;
+}
+
+.metric-value.large {
+    font-size: 3em;
+    color: #667eea;
+}
+
+.metric-range {
+    color: #6b7280;
+    margin-top: 8px;
+    font-size: 0.9em;
+}
+
+.confidence {
+    color: #059669;
+    font-weight: 600;
+    margin-top: 5px;
+    font-size: 0.9em;
+}
+
+/* Financial Details */
+.financial-details {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.financial-details h4 {
+    color: #374151;
+    margin-bottom: 15px;
+    font-size: 1.1em;
+}
+
+.financial-details table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.financial-details tr {
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.financial-details td {
+    padding: 12px 8px;
+}
+
+.text-right {
+    text-align: right;
+    font-weight: 600;
+}
+
+/* Info Boxes */
+.summary-box,
+.assumptions-box,
+.notes-box,
+.disclaimer-box {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    border-left: 4px solid #667eea;
+}
+
+.assumptions-box {
+    border-left-color: #3b82f6;
+    background: #eff6ff;
+}
+
+.notes-box {
+    border-left-color: #f59e0b;
+    background: #fffbeb;
+}
+
+.disclaimer-box {
+    border-left-color: #ef4444;
+    background: #fef2f2;
+}
+
+.summary-box h4,
+.assumptions-box h4,
+.notes-box h4,
+.disclaimer-box h4 {
+    color: #374151;
+    margin-bottom: 12px;
+    font-size: 1em;
+}
+
+.summary-box p,
+.assumptions-box p,
+.notes-box p,
+.disclaimer-box p {
+    color: #4b5563;
+    line-height: 1.6;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        padding: 20px;
+    }
+
+    h1 {
+        font-size: 1.8em;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .metrics-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .result-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

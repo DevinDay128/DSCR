@@ -1,6 +1,12 @@
 # AI Rent and DSCR Calculator
-# No external dependencies required - uses Python standard library only
 # Python 3.7+ required
+
+# Core calculator (no dependencies)
+# The calculator module itself uses only Python standard library
+
+# Web Interface Dependencies
+flask>=2.3.0
+streamlit>=1.28.0
 
 # For development/testing (optional):
 # pytest>=7.0.0

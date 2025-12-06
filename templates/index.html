@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Rent & DSCR Calculator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏠 AI Rent & DSCR Calculator</h1>
+            <p class="subtitle">Estimate rental income and analyze investment property performance</p>
+        </header>
+
+        <div class="warning-banner">
+            ⚠️ <strong>Important:</strong> This tool provides rough AI estimates for screening purposes only.
+            Always verify with professional appraisals and local market research.
+        </div>
+
+        <form id="calculatorForm">
+            <!-- Property Information -->
+            <section class="form-section">
+                <h2>📍 Property Information</h2>
+                <div class="form-group">
+                    <label for="address">Property Address *</label>
+                    <input type="text" id="address" name="address" required
+                           placeholder="123 Main St, Austin, TX 78701">
+                </div>
+                <div class="form-group">
+                    <label for="purchase_price">Purchase Price *</label>
+                    <input type="number" id="purchase_price" name="purchase_price" required
+                           placeholder="400000" min="0" step="1000">
+                </div>
+            </section>
+
+            <!-- Property Details -->
+            <section class="form-section">
+                <h2>🏡 Property Details (Optional)</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="property_type">Property Type</label>
+                        <select id="property_type" name="property_type">
+                            <option value="">Select...</option>
+                            <option value="SFR">Single Family</option>
+                            <option value="Condo">Condo</option>
+                            <option value="Townhouse">Townhouse</option>
+                            <option value="Duplex">Duplex</option>
+                            <option value="Multi-family">Multi-family</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="beds">Bedrooms</label>
+                        <input type="number" id="beds" name="beds" placeholder="3" min="0" step="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="baths">Bathrooms</label>
+                        <input type="number" id="baths" name="baths" placeholder="2" min="0" step="0.5">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="sqft">Square Feet</label>
+                        <input type="number" id="sqft" name="sqft" placeholder="1800" min="0" step="100">
+                    </div>
+                    <div class="form-group">
+                        <label for="condition">Condition</label>
+                        <select id="condition" name="condition">
+                            <option value="">Select...</option>
+                            <option value="Excellent">Excellent</option>
+                            <option value="Good">Good</option>
+                            <option value="Average">Average</option>
+                            <option value="Fair">Fair</option>
+                            <option value="Poor">Poor</option>
+                            <option value="Fixer">Fixer / Needs Work</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Loan Terms -->
+            <section class="form-section">
+                <h2>💰 Loan Terms</h2>
+                <div class="form-group">
+                    <label>Down Payment</label>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="down_payment_type" value="percent" checked>
+                            Percentage
+                        </label>
+                        <label>
+                            <input type="radio" name="down_payment_type" value="amount">
+                            Dollar Amount
+                        </label>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group" id="down_percent_group">
+                        <label for="down_payment_percent">Down Payment %</label>
+                        <input type="number" id="down_payment_percent" name="down_payment_percent"
+                               placeholder="20" min="0" max="100" step="0.1">
+                    </div>
+                    <div class="form-group" id="down_amount_group" style="display: none;">
+                        <label for="down_payment_amount">Down Payment $</label>
+                        <input type="number" id="down_payment_amount" name="down_payment_amount"
+                               placeholder="80000" min="0" step="1000">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="interest_rate_annual">Interest Rate %</label>
+                        <input type="number" id="interest_rate_annual" name="interest_rate_annual"
+                               placeholder="7.0" min="0" max="20" step="0.01" value="7.0">
+                    </div>
+                    <div class="form-group">
+                        <label for="term_years">Loan Term (years)</label>
+                        <input type="number" id="term_years" name="term_years"
+                               placeholder="30" min="1" max="40" step="1" value="30">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="interest_only" name="interest_only">
+                        Interest-Only Loan
+                    </label>
+                </div>
+            </section>
+
+            <!-- Operating Assumptions -->
+            <section class="form-section">
+                <h2>📊 Operating Assumptions</h2>
+                <div class="form-group">
+                    <label for="operating_expense_ratio">Operating Expense Ratio % (default 35%)</label>
+                    <input type="number" id="operating_expense_ratio" name="operating_expense_ratio"
+                           placeholder="35" min="0" max="100" step="1">
+                    <small>Includes property management, maintenance, taxes, HOA, etc. Does not include insurance ($150/month assumed).</small>
+                </div>
+            </section>
+
+            <button type="submit" class="btn-calculate">Calculate DSCR</button>
+        </form>
+
+        <!-- Results Section -->
+        <div id="results" class="results" style="display: none;">
+            <h2>📈 Analysis Results</h2>
+
+            <div class="result-card">
+                <div class="result-header">
+                    <h3>🏠 <span id="result_address"></span></h3>
+                    <div class="risk-badge" id="risk_badge"></div>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric">
+                        <label>Estimated Monthly Rent</label>
+                        <div class="metric-value">$<span id="estimated_rent"></span></div>
+                        <div class="metric-range">Range: $<span id="low_rent"></span> - $<span id="high_rent"></span></div>
+                        <div class="confidence">Confidence: <span id="confidence"></span>%</div>
+                    </div>
+
+                    <div class="metric highlight">
+                        <label>DSCR</label>
+                        <div class="metric-value large" id="dscr_value"></div>
+                    </div>
+
+                    <div class="metric">
+                        <label>Monthly Cashflow</label>
+                        <div class="metric-value" id="cashflow_value"></div>
+                    </div>
+                </div>
+
+                <div class="financial-details">
+                    <h4>Financial Details</h4>
+                    <table>
+                        <tr>
+                            <td>Purchase Price:</td>
+                            <td class="text-right">$<span id="purchase_price_result"></span></td>
+                        </tr>
+                        <tr>
+                            <td>Down Payment:</td>
+                            <td class="text-right">$<span id="down_payment_result"></span> (<span id="down_percent_result"></span>%)</td>
+                        </tr>
+                        <tr>
+                            <td>Loan Amount:</td>
+                            <td class="text-right">$<span id="loan_amount_result"></span></td>
+                        </tr>
+                        <tr>
+                            <td>Monthly Debt Service:</td>
+                            <td class="text-right">$<span id="monthly_debt_result"></span></td>
+                        </tr>
+                        <tr>
+                            <td>Annual NOI:</td>
+                            <td class="text-right">$<span id="noi_annual_result"></span></td>
+                        </tr>
+                        <tr>
+                            <td>Annual Debt Service:</td>
+                            <td class="text-right">$<span id="annual_debt_result"></span></td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="summary-box">
+                    <h4>Summary</h4>
+                    <p id="human_summary"></p>
+                </div>
+
+                <div class="assumptions-box">
+                    <h4>Assumptions Made</h4>
+                    <p id="assumptions"></p>
+                </div>
+
+                <div class="notes-box">
+                    <h4>📝 Notes for Investor</h4>
+                    <p id="notes"></p>
+                </div>
+
+                <div class="disclaimer-box">
+                    <h4>⚠️ Disclaimer</h4>
+                    <p id="disclaimer"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Toggle down payment input fields
+        document.querySelectorAll('input[name="down_payment_type"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                if (this.value === 'percent') {
+                    document.getElementById('down_percent_group').style.display = 'block';
+                    document.getElementById('down_amount_group').style.display = 'none';
+                    document.getElementById('down_payment_amount').value = '';
+                } else {
+                    document.getElementById('down_percent_group').style.display = 'none';
+                    document.getElementById('down_amount_group').style.display = 'block';
+                    document.getElementById('down_payment_percent').value = '';
+                }
+            });
+        });
+
+        // Handle form submission
+        document.getElementById('calculatorForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            // Gather form data
+            const formData = {
+                address: document.getElementById('address').value,
+                purchase_price: document.getElementById('purchase_price').value,
+                down_payment_type: document.querySelector('input[name="down_payment_type"]:checked').value,
+                down_payment_percent: document.getElementById('down_payment_percent').value,
+                down_payment_amount: document.getElementById('down_payment_amount').value,
+                interest_rate_annual: document.getElementById('interest_rate_annual').value,
+                term_years: document.getElementById('term_years').value,
+                interest_only: document.getElementById('interest_only').checked ? 'true' : 'false',
+                property_type: document.getElementById('property_type').value,
+                beds: document.getElementById('beds').value,
+                baths: document.getElementById('baths').value,
+                sqft: document.getElementById('sqft').value,
+                condition: document.getElementById('condition').value,
+                operating_expense_ratio: document.getElementById('operating_expense_ratio').value
+            };
+
+            try {
+                const response = await fetch('/calculate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    displayResults(data.result);
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error calculating results: ' + error);
+            }
+        });
+
+        function displayResults(result) {
+            // Show results section
+            document.getElementById('results').style.display = 'block';
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+
+            // Set risk badge
+            const riskBadge = document.getElementById('risk_badge');
+            riskBadge.textContent = result.risk_label;
+            riskBadge.className = 'risk-badge ' + result.risk_label.toLowerCase();
+
+            // Populate values
+            document.getElementById('result_address').textContent = result.address;
+            document.getElementById('estimated_rent').textContent = formatNumber(result.estimated_monthly_rent);
+            document.getElementById('low_rent').textContent = formatNumber(result.low_estimate_rent);
+            document.getElementById('high_rent').textContent = formatNumber(result.high_estimate_rent);
+            document.getElementById('confidence').textContent = Math.round(result.confidence_score * 100);
+
+            document.getElementById('dscr_value').textContent = result.DSCR.toFixed(2);
+
+            const cashflow = result.monthly_cashflow;
+            const cashflowEl = document.getElementById('cashflow_value');
+            cashflowEl.textContent = (cashflow >= 0 ? '+' : '') + '$' + formatNumber(Math.abs(cashflow));
+            cashflowEl.style.color = cashflow >= 0 ? '#10b981' : '#ef4444';
+
+            document.getElementById('purchase_price_result').textContent = formatNumber(result.purchase_price);
+            document.getElementById('down_payment_result').textContent = formatNumber(result.down_payment_amount);
+            document.getElementById('down_percent_result').textContent = Math.round(result.down_payment_percent * 100);
+            document.getElementById('loan_amount_result').textContent = formatNumber(result.loan_amount);
+            document.getElementById('monthly_debt_result').textContent = formatNumber(result.monthly_debt_service);
+            document.getElementById('noi_annual_result').textContent = formatNumber(result.NOI_annual);
+            document.getElementById('annual_debt_result').textContent = formatNumber(result.annual_debt_service);
+
+            document.getElementById('human_summary').textContent = result.human_summary;
+            document.getElementById('assumptions').textContent = result.assumptions;
+            document.getElementById('notes').textContent = result.notes_for_investor;
+            document.getElementById('disclaimer').textContent = result.disclaimer;
+        }
+
+        function formatNumber(num) {
+            return Math.round(num).toLocaleString();
+        }
+    </script>
+</body>
+</html>
