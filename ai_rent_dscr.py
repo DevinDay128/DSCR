@@ -31,7 +31,8 @@ class AIRentDSCRCalculator:
         term_years: int = 30,
         interest_only: bool = False,
         vacancy_rate: float = 0.0,  # Per requirements: 0% vacancy
-        operating_expense_ratio: Optional[float] = None,
+        property_tax_rate: Optional[float] = None,  # Annual tax rate (e.g., 0.012 for 1.2%)
+        insurance_monthly: Optional[float] = None,  # Monthly insurance cost
         property_type: Optional[str] = None,
         beds: Optional[int] = None,
         baths: Optional[float] = None,
@@ -42,6 +43,8 @@ class AIRentDSCRCalculator:
         """
         Calculate estimated rent and DSCR for a property.
 
+        Expenses calculated: Principal & Interest (P&I), Property Taxes, Insurance only.
+
         Args:
             address: Property address
             purchase_price: Purchase price in USD
@@ -51,7 +54,8 @@ class AIRentDSCRCalculator:
             term_years: Loan term in years
             interest_only: Whether loan is interest-only
             vacancy_rate: Vacancy rate as decimal (default 0.0)
-            operating_expense_ratio: Operating expense ratio as decimal
+            property_tax_rate: Annual property tax rate as decimal (default 0.012 for 1.2%)
+            insurance_monthly: Monthly insurance cost in USD (default 150)
             property_type: Type of property (SFR, condo, etc.)
             beds: Number of bedrooms
             baths: Number of bathrooms
@@ -87,24 +91,30 @@ class AIRentDSCRCalculator:
         confidence_score = rent_estimates['confidence']
         assumptions = rent_estimates['assumptions']
 
-        # Step 3: Calculate operating expense ratio
-        if operating_expense_ratio is None:
-            operating_expense_ratio = 0.35  # Default 35%
+        # Step 3: Calculate property taxes
+        if property_tax_rate is None:
+            property_tax_rate = 0.012  # Default 1.2% annually (US average)
 
-        # Step 4: Calculate effective gross income (with vacancy)
+        property_tax_annual = purchase_price * property_tax_rate
+        property_tax_monthly = property_tax_annual / 12
+
+        # Step 4: Set insurance
+        if insurance_monthly is None:
+            insurance_monthly = 150  # Default $150/month
+
+        # Step 5: Calculate effective gross income (with vacancy)
         effective_gross_income_monthly = estimated_monthly_rent * (1 - vacancy_rate)
 
-        # Step 5: Calculate operating expenses
-        # Per requirements: estimate insurance at $150/month
-        insurance_monthly = 150
-        base_operating_expenses = effective_gross_income_monthly * operating_expense_ratio
-        operating_expenses_monthly = base_operating_expenses + insurance_monthly
+        # Step 6: Calculate total monthly expenses (Taxes + Insurance only)
+        # Note: P&I (debt service) is calculated separately and NOT included in operating expenses
+        monthly_operating_expenses = property_tax_monthly + insurance_monthly
 
-        # Step 6: Calculate NOI
-        NOI_monthly = effective_gross_income_monthly - operating_expenses_monthly
+        # Step 7: Calculate NOI (Net Operating Income)
+        # NOI = Income - Operating Expenses (does NOT subtract debt service)
+        NOI_monthly = effective_gross_income_monthly - monthly_operating_expenses
         NOI_annual = NOI_monthly * 12
 
-        # Step 7: Calculate debt service
+        # Step 8: Calculate debt service (P&I)
         monthly_debt_service = self._calculate_debt_service(
             loan_amount=loan_amount,
             interest_rate_annual=interest_rate_annual,
@@ -113,16 +123,18 @@ class AIRentDSCRCalculator:
         )
         annual_debt_service = monthly_debt_service * 12
 
-        # Step 8: Calculate DSCR
+        # Step 9: Calculate DSCR
+        # DSCR = NOI / Annual Debt Service
         if annual_debt_service > 0:
             DSCR = NOI_annual / annual_debt_service
         else:
             DSCR = 0
 
-        # Step 9: Determine risk label
+        # Step 10: Determine risk label
         risk_label = self._get_risk_label(DSCR)
 
-        # Step 10: Calculate monthly cashflow
+        # Step 11: Calculate monthly cashflow
+        # Cashflow = Rent - Taxes - Insurance - P&I
         monthly_cashflow = NOI_monthly - monthly_debt_service
 
         # Step 11: Generate summaries
@@ -175,14 +187,24 @@ class AIRentDSCRCalculator:
             "low_estimate_rent": low_estimate_rent,
             "high_estimate_rent": high_estimate_rent,
             "vacancy_rate": vacancy_rate,
-            "operating_expense_ratio": operating_expense_ratio,
+
+            # Expense breakdown
+            "property_tax_rate": property_tax_rate,
+            "property_tax_monthly": property_tax_monthly,
+            "property_tax_annual": property_tax_annual,
+            "insurance_monthly": insurance_monthly,
+            "insurance_annual": insurance_monthly * 12,
 
             "effective_gross_income_monthly": effective_gross_income_monthly,
-            "operating_expenses_monthly": operating_expenses_monthly,
+            "monthly_operating_expenses": monthly_operating_expenses,
+            "NOI_monthly": NOI_monthly,
             "NOI_annual": NOI_annual,
 
+            # Debt service (P&I)
             "monthly_debt_service": monthly_debt_service,
             "annual_debt_service": annual_debt_service,
+
+            # Results
             "DSCR": DSCR,
             "risk_label": risk_label,
             "monthly_cashflow": monthly_cashflow,
@@ -453,8 +475,9 @@ class AIRentDSCRCalculator:
 
         notes.append("Verify actual rents with local property managers or recent comparable leases.")
         notes.append("Consider getting professional appraisal and rent study before proceeding.")
-        notes.append("Operating expense ratio of 35% is an estimate - verify actual costs for this property.")
-        notes.append("Insurance estimate of $150/month is generic - get actual quote for this property.")
+        notes.append("Property tax estimate is based on purchase price - verify actual tax rate for this location.")
+        notes.append("Insurance estimate may vary - get actual quote for this specific property.")
+        notes.append("This calculation includes only P&I, Taxes, and Insurance. Additional expenses (maintenance, HOA, property management, etc.) will reduce actual cashflow.")
 
         return " ".join(notes)
 

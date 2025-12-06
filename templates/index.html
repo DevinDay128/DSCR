@@ -126,14 +126,26 @@
                 </div>
             </section>
 
-            <!-- Operating Assumptions -->
+            <!-- Expense Assumptions -->
             <section class="form-section">
-                <h2>📊 Operating Assumptions</h2>
-                <div class="form-group">
-                    <label for="operating_expense_ratio">Operating Expense Ratio % (default 35%)</label>
-                    <input type="number" id="operating_expense_ratio" name="operating_expense_ratio"
-                           placeholder="35" min="0" max="100" step="1">
-                    <small>Includes property management, maintenance, taxes, HOA, etc. Does not include insurance ($150/month assumed).</small>
+                <h2>📊 Expense Assumptions</h2>
+                <p class="section-note">💡 Expenses calculated: <strong>P&I (Principal & Interest), Property Taxes, and Insurance only</strong></p>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="property_tax_rate">Property Tax Rate % (default 1.2%)</label>
+                        <input type="number" id="property_tax_rate" name="property_tax_rate"
+                               placeholder="1.2" min="0" max="10" step="0.1">
+                        <small>Annual property tax rate. US average is ~1.2% but varies greatly by location.</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="insurance_monthly">Insurance ($/month, default $150)</label>
+                        <input type="number" id="insurance_monthly" name="insurance_monthly"
+                               placeholder="150" min="0" step="10">
+                        <small>Monthly homeowners insurance cost. Get actual quote for accuracy.</small>
+                    </div>
+                </div>
+                <div class="warning-note">
+                    ⚠️ Note: This calculator does NOT include maintenance, property management, HOA, utilities, or other operating expenses. Actual cashflow will be lower.
                 </div>
             </section>
 
@@ -170,8 +182,12 @@
                 </div>
 
                 <div class="financial-details">
-                    <h4>Financial Details</h4>
+                    <h4>💰 Financial Details</h4>
                     <table>
+                        <tr>
+                            <td><strong>Purchase & Financing</strong></td>
+                            <td></td>
+                        </tr>
                         <tr>
                             <td>Purchase Price:</td>
                             <td class="text-right">$<span id="purchase_price_result"></span></td>
@@ -184,9 +200,31 @@
                             <td>Loan Amount:</td>
                             <td class="text-right">$<span id="loan_amount_result"></span></td>
                         </tr>
+                        <tr><td colspan="2"><hr style="margin: 10px 0;"></td></tr>
                         <tr>
-                            <td>Monthly Debt Service:</td>
+                            <td><strong>Monthly Expenses</strong></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>Property Taxes:</td>
+                            <td class="text-right">$<span id="property_tax_monthly_result"></span></td>
+                        </tr>
+                        <tr>
+                            <td>Insurance:</td>
+                            <td class="text-right">$<span id="insurance_monthly_result"></span></td>
+                        </tr>
+                        <tr>
+                            <td>P&I (Debt Service):</td>
                             <td class="text-right">$<span id="monthly_debt_result"></span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Total Monthly Expenses:</strong></td>
+                            <td class="text-right"><strong>$<span id="total_monthly_expenses"></span></strong></td>
+                        </tr>
+                        <tr><td colspan="2"><hr style="margin: 10px 0;"></td></tr>
+                        <tr>
+                            <td><strong>DSCR Calculation</strong></td>
+                            <td></td>
                         </tr>
                         <tr>
                             <td>Annual NOI:</td>
@@ -195,6 +233,10 @@
                         <tr>
                             <td>Annual Debt Service:</td>
                             <td class="text-right">$<span id="annual_debt_result"></span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>DSCR Ratio:</strong></td>
+                            <td class="text-right"><strong><span id="dscr_table"></span></strong></td>
                         </tr>
                     </table>
                 </div>
@@ -257,7 +299,8 @@
                 baths: document.getElementById('baths').value,
                 sqft: document.getElementById('sqft').value,
                 condition: document.getElementById('condition').value,
-                operating_expense_ratio: document.getElementById('operating_expense_ratio').value
+                property_tax_rate: document.getElementById('property_tax_rate').value,
+                insurance_monthly: document.getElementById('insurance_monthly').value
             };
 
             try {
@@ -309,9 +352,20 @@
             document.getElementById('down_payment_result').textContent = formatNumber(result.down_payment_amount);
             document.getElementById('down_percent_result').textContent = Math.round(result.down_payment_percent * 100);
             document.getElementById('loan_amount_result').textContent = formatNumber(result.loan_amount);
+
+            // Expense breakdown
+            document.getElementById('property_tax_monthly_result').textContent = formatNumber(result.property_tax_monthly);
+            document.getElementById('insurance_monthly_result').textContent = formatNumber(result.insurance_monthly);
             document.getElementById('monthly_debt_result').textContent = formatNumber(result.monthly_debt_service);
+
+            // Total monthly expenses
+            const totalExpenses = result.property_tax_monthly + result.insurance_monthly + result.monthly_debt_service;
+            document.getElementById('total_monthly_expenses').textContent = formatNumber(totalExpenses);
+
+            // DSCR calculations
             document.getElementById('noi_annual_result').textContent = formatNumber(result.NOI_annual);
             document.getElementById('annual_debt_result').textContent = formatNumber(result.annual_debt_service);
+            document.getElementById('dscr_table').textContent = result.DSCR.toFixed(2);
 
             document.getElementById('human_summary').textContent = result.human_summary;
             document.getElementById('assumptions').textContent = result.assumptions;

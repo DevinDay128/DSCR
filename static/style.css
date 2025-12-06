@@ -66,6 +66,25 @@ h1 {
     font-size: 1.3em;
 }
 
+.section-note {
+    background: #eff6ff;
+    border-left: 3px solid #3b82f6;
+    padding: 12px;
+    margin-bottom: 20px;
+    border-radius: 6px;
+    color: #1e40af;
+}
+
+.warning-note {
+    background: #fef3c7;
+    border-left: 3px solid #f59e0b;
+    padding: 12px;
+    margin-top: 15px;
+    border-radius: 6px;
+    color: #92400e;
+    font-size: 0.9em;
+}
+
 .form-group {
     margin-bottom: 20px;
 }

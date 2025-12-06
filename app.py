@@ -57,9 +57,11 @@ def calculate():
         if data.get('condition'):
             params['condition'] = data['condition']
 
-        # Operating assumptions
-        if data.get('operating_expense_ratio'):
-            params['operating_expense_ratio'] = float(data['operating_expense_ratio']) / 100
+        # Expense assumptions
+        if data.get('property_tax_rate'):
+            params['property_tax_rate'] = float(data['property_tax_rate']) / 100
+        if data.get('insurance_monthly'):
+            params['insurance_monthly'] = float(data['insurance_monthly'])
 
         # Calculate
         calculator = AIRentDSCRCalculator()

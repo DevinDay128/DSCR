@@ -115,16 +115,30 @@ with tab1:
         term_years = st.number_input("Loan Term (years)", min_value=1, max_value=40, value=30, step=1)
         interest_only = st.checkbox("Interest-Only Loan")
 
-    # Operating Assumptions
-    st.header("📊 Operating Assumptions")
-    operating_expense_ratio = st.number_input(
-        "Operating Expense Ratio % (default 35%)",
-        min_value=0.0,
-        max_value=100.0,
-        value=35.0,
-        step=1.0,
-        help="Includes property management, maintenance, taxes, HOA, etc. Does not include insurance ($150/month assumed)."
-    )
+    # Expense Assumptions
+    st.header("📊 Expense Assumptions")
+    st.info("💡 **Expenses calculated: P&I (Principal & Interest), Property Taxes, and Insurance only**")
+
+    col1, col2 = st.columns(2)
+    with col1:
+        property_tax_rate = st.number_input(
+            "Property Tax Rate % (default 1.2%)",
+            min_value=0.0,
+            max_value=10.0,
+            value=1.2,
+            step=0.1,
+            help="Annual property tax rate. US average is ~1.2% but varies greatly by location."
+        )
+    with col2:
+        insurance_monthly = st.number_input(
+            "Insurance ($/month, default $150)",
+            min_value=0,
+            value=150,
+            step=10,
+            help="Monthly homeowners insurance cost. Get actual quote for accuracy."
+        )
+
+    st.warning("⚠️ Note: This calculator does NOT include maintenance, property management, HOA, utilities, or other operating expenses. Actual cashflow will be lower.")
 
     # Calculate button
     if st.button("🔍 Calculate DSCR", type="primary", use_container_width=True):
@@ -138,7 +152,8 @@ with tab1:
                 'interest_rate_annual': interest_rate_annual / 100,
                 'term_years': term_years,
                 'interest_only': interest_only,
-                'operating_expense_ratio': operating_expense_ratio / 100
+                'property_tax_rate': property_tax_rate / 100,
+                'insurance_monthly': insurance_monthly
             }
 
             if down_payment_percent is not None:
@@ -220,13 +235,17 @@ with tab2:
             st.write(f"- Loan Type: {'Interest-Only' if result['interest_only'] else 'Fully Amortized'}")
 
         with col2:
-            st.markdown("**Income & Expenses:**")
-            st.write(f"- Monthly Rent: ${result['estimated_monthly_rent']:,.2f}")
-            st.write(f"- Vacancy Rate: {result['vacancy_rate']*100:.1f}%")
-            st.write(f"- Operating Expense Ratio: {result['operating_expense_ratio']*100:.0f}%")
-            st.write(f"- Monthly Debt Service: ${result['monthly_debt_service']:,.2f}")
+            st.markdown("**Monthly Expenses (PITI):**")
+            st.write(f"- Property Taxes: ${result['property_tax_monthly']:,.2f}")
+            st.write(f"- Insurance: ${result['insurance_monthly']:,.2f}")
+            st.write(f"- P&I (Debt Service): ${result['monthly_debt_service']:,.2f}")
+            total_monthly = result['property_tax_monthly'] + result['insurance_monthly'] + result['monthly_debt_service']
+            st.write(f"- **Total Monthly PITI: ${total_monthly:,.2f}**")
+            st.write("")
+            st.markdown("**DSCR Calculation:**")
             st.write(f"- Annual NOI: ${result['NOI_annual']:,.2f}")
             st.write(f"- Annual Debt Service: ${result['annual_debt_service']:,.2f}")
+            st.write(f"- **DSCR Ratio: {result['DSCR']:.2f}**")
 
         st.divider()
 
@@ -271,10 +290,13 @@ with st.sidebar:
     - 🟡 **Borderline** (1.10-1.30): Verify carefully
     - 🔴 **Weak** (<1.10): May have negative cashflow
 
-    **Key Assumptions:**
-    - Vacancy: 0% (per requirements)
-    - Insurance: $150/month
-    - Operating Expenses: 35% (customizable)
+    **Expenses Calculated:**
+    - **P** = Principal (part of loan payment)
+    - **I** = Interest (part of loan payment)
+    - **T** = Property Taxes (default 1.2% annually)
+    - **I** = Insurance (default $150/month)
+
+    **Note:** Does NOT include maintenance, HOA, property management, or other operating expenses.
     """)
 
     st.divider()
