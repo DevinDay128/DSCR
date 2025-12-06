@@ -1,0 +1,8 @@
+# AI Rent and DSCR Calculator
+# No external dependencies required - uses Python standard library only
+# Python 3.7+ required
+
+# For development/testing (optional):
+# pytest>=7.0.0
+# black>=22.0.0
+# pylint>=2.12.0
