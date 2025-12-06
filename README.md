@@ -8,6 +8,25 @@ This tool helps real estate investors quickly evaluate rental properties by:
 1. **Estimating realistic monthly market rent** based on property characteristics and general market patterns
 2. **Calculating DSCR** (Debt Service Coverage Ratio) to assess the property's ability to cover debt payments
 
+## 🚀 Quick Start - Web Interface
+
+**Get started in under 2 minutes!**
+
+### Option 1: Streamlit (Easiest)
+```bash
+pip install streamlit
+streamlit run streamlit_app.py
+```
+
+### Option 2: Flask (Professional)
+```bash
+pip install flask
+python app.py
+# Open http://localhost:5000
+```
+
+See [QUICKSTART.md](QUICKSTART.md) for detailed instructions and [HOSTING_GUIDE.md](HOSTING_GUIDE.md) for deployment options.
+
 ## Important Disclaimers
 
 ⚠️ **This is NOT professional underwriting** - This tool provides rough AI-powered estimates based on general patterns. It does NOT access live MLS data, Zillow, AirDNA, or any paid databases.
