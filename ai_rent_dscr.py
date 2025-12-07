@@ -282,118 +282,122 @@ class AIRentDSCRCalculator:
         condition: Optional[str]
     ) -> Dict[str, Any]:
         """
-        Estimate monthly market rent for the property.
+        Estimate monthly market rent for the property using yield-based formula.
 
-        This uses general patterns based on purchase price and property characteristics.
-        NOT based on live MLS, Zillow, or any paid data source.
+        Formula:
+        1. Price-based: Rent_price = PurchasePrice × 0.0085 (0.85% monthly yield)
+        2. SqFt-based: Rent_sqft = SqFt × $1.40/sqft (if available)
+        3. BaseRent = average of both, or just price-based if no sqft
+        4. Apply adjustment factor (0.85 to 1.15) based on property characteristics
+        5. Range = ±10% of estimated rent
         """
 
         assumptions_list = []
-        confidence = 0.6  # Start with moderate confidence
+        confidence = 0.70  # Start with good confidence for formula-based approach
 
-        # Base estimate using 1% rule as starting point, then adjust
-        # The 1% rule suggests monthly rent = 1% of purchase price
-        base_estimate = purchase_price * 0.01
+        # Constants
+        YIELD_LOCAL = 0.0085  # 0.85% monthly yield
+        RENT_PER_SQFT_LOCAL = 1.40  # $1.40 per square foot
 
-        # Adjust based on price tier (lower priced properties often exceed 1%, higher priced are below)
-        if purchase_price < 100000:
-            rent_multiplier = 0.012  # 1.2%
-            confidence = 0.5
-            assumptions_list.append("Low purchase price - using higher rent multiplier")
-        elif purchase_price < 250000:
-            rent_multiplier = 0.01  # 1.0%
-            confidence = 0.65
-        elif purchase_price < 500000:
-            rent_multiplier = 0.0085  # 0.85%
-            confidence = 0.7
-        elif purchase_price < 1000000:
-            rent_multiplier = 0.007  # 0.7%
-            confidence = 0.6
+        # Step 1: Price-based estimate
+        rent_price = purchase_price * YIELD_LOCAL
+        assumptions_list.append(f"Price-based estimate: ${rent_price:,.0f} (0.85% monthly yield)")
+
+        # Step 2: SqFt-based estimate (if available)
+        if sqft is not None and sqft > 0:
+            rent_sqft = sqft * RENT_PER_SQFT_LOCAL
+            base_rent = (rent_price + rent_sqft) / 2
+            assumptions_list.append(f"SqFt-based estimate: ${rent_sqft:,.0f} ({sqft} sqft × ${RENT_PER_SQFT_LOCAL}/sqft)")
+            assumptions_list.append(f"Base rent: ${base_rent:,.0f} (average of both methods)")
         else:
-            rent_multiplier = 0.006  # 0.6%
-            confidence = 0.5
-            assumptions_list.append("High purchase price - using lower rent multiplier")
-
-        estimated_rent = purchase_price * rent_multiplier
-
-        # Adjust based on property type if provided
-        if property_type:
-            if property_type.upper() in ['CONDO', 'TOWNHOUSE']:
-                estimated_rent *= 0.95
-                assumptions_list.append(f"Adjusted for {property_type} (typically -5%)")
-            elif property_type.upper() in ['MULTI-FAMILY', 'DUPLEX', 'TRIPLEX']:
-                assumptions_list.append(f"Multi-family property - estimate is per unit average")
-                confidence *= 0.9
-        else:
-            assumptions_list.append("Property type not specified - assuming single-family residence")
+            base_rent = rent_price
+            assumptions_list.append("Square footage not provided - using price-based estimate only")
             confidence *= 0.95
 
-        # Adjust based on bedrooms if provided
-        if beds is not None:
-            if beds == 1:
-                assumptions_list.append("1 bedroom property")
-                confidence *= 0.9
-            elif beds >= 5:
-                assumptions_list.append(f"{beds} bedrooms - larger property")
-                confidence *= 0.85
-        else:
-            assumptions_list.append("Number of bedrooms not specified - assuming 3 bedrooms")
-            confidence *= 0.9
+        # Step 3: Calculate adjustment factor (bounded to ±15%)
+        adjustment_factor = 1.0  # Start at neutral
+        adjustment_reasons = []
 
-        # Note baths if provided
-        if baths is not None:
-            assumptions_list.append(f"Property has {baths} bathrooms")
+        # Adjust for property type
+        if property_type:
+            if property_type.upper() in ['CONDO', 'TOWNHOUSE']:
+                adjustment_factor *= 0.97  # -3%
+                adjustment_reasons.append(f"{property_type} (-3%)")
+            elif property_type.upper() in ['MULTI-FAMILY', 'DUPLEX', 'TRIPLEX']:
+                adjustment_reasons.append(f"{property_type} (per unit estimate)")
+                confidence *= 0.90
         else:
-            assumptions_list.append("Number of bathrooms not specified - assuming 2 bathrooms")
-            confidence *= 0.9
+            assumptions_list.append("Property type not specified - assuming single-family")
+            confidence *= 0.95
 
-        # Note square footage if provided
-        if sqft is not None:
-            assumptions_list.append(f"Property is {sqft} square feet")
-            # Sanity check on price per sqft
-            price_per_sqft = purchase_price / sqft
-            if price_per_sqft < 50:
-                assumptions_list.append("Low price per sqft - may be in low-cost area or needs work")
-                confidence *= 0.8
-            elif price_per_sqft > 500:
-                assumptions_list.append("High price per sqft - may be in premium area")
-                confidence *= 0.85
-        else:
-            assumptions_list.append("Square footage not specified")
-            confidence *= 0.9
-
-        # Adjust based on condition if provided
+        # Adjust for condition
         if condition:
             condition_lower = condition.lower()
             if 'excellent' in condition_lower or 'updated' in condition_lower or 'renovated' in condition_lower:
-                estimated_rent *= 1.1
-                assumptions_list.append("Good condition - increased rent estimate by 10%")
+                adjustment_factor *= 1.08  # +8%
+                adjustment_reasons.append("Excellent condition (+8%)")
+            elif 'good' in condition_lower:
+                adjustment_factor *= 1.03  # +3%
+                adjustment_reasons.append("Good condition (+3%)")
             elif 'poor' in condition_lower or 'fixer' in condition_lower or 'needs work' in condition_lower:
-                estimated_rent *= 0.85
-                assumptions_list.append("Poor condition - decreased rent estimate by 15%")
-                confidence *= 0.8
+                adjustment_factor *= 0.90  # -10%
+                adjustment_reasons.append("Poor condition (-10%)")
+                confidence *= 0.85
+            elif 'fair' in condition_lower or 'average' in condition_lower:
+                # No adjustment for average condition
+                adjustment_reasons.append("Average condition (no adjustment)")
         else:
-            assumptions_list.append("Property condition not specified - assuming average condition")
+            assumptions_list.append("Condition not specified - assuming average")
             confidence *= 0.95
 
-        # Parse location from address for regional adjustments
+        # Adjust for location (high-cost metros)
         address_upper = address.upper()
-
-        # High-cost metros (rough heuristic)
         high_cost_cities = ['SAN FRANCISCO', 'NEW YORK', 'BOSTON', 'SEATTLE', 'LOS ANGELES',
-                           'SAN JOSE', 'WASHINGTON DC', 'OAKLAND', 'MANHATTAN']
+                           'SAN JOSE', 'WASHINGTON DC', 'OAKLAND', 'MANHATTAN', 'MIAMI']
         if any(city in address_upper for city in high_cost_cities):
-            assumptions_list.append("High-cost metro area detected")
-            confidence *= 0.85  # Lower confidence due to high variability
+            adjustment_factor *= 1.05  # +5% for high-cost metros
+            adjustment_reasons.append("High-cost metro area (+5%)")
+            confidence *= 0.90  # Lower confidence due to variability
 
-        # Create range (±15%)
-        low_estimate = estimated_rent * 0.85
-        high_estimate = estimated_rent * 1.15
+        # Adjust for bedrooms (if unusual size)
+        if beds is not None:
+            if beds == 1:
+                adjustment_factor *= 0.95  # -5% for studio/1-bed
+                adjustment_reasons.append("1 bedroom (-5%)")
+            elif beds >= 5:
+                adjustment_factor *= 1.03  # +3% for large properties
+                adjustment_reasons.append(f"{beds} bedrooms (+3%)")
+            else:
+                assumptions_list.append(f"{beds} bedrooms (typical size)")
+        else:
+            assumptions_list.append("Bedrooms not specified - assuming 3 bedrooms")
+            confidence *= 0.92
+
+        # Note bathrooms
+        if baths is not None:
+            assumptions_list.append(f"{baths} bathrooms")
+        else:
+            assumptions_list.append("Bathrooms not specified")
+            confidence *= 0.95
+
+        # Sanity check: bound adjustment factor to ±15% (0.85 to 1.15)
+        adjustment_factor = max(0.85, min(1.15, adjustment_factor))
+
+        # Step 4: Apply adjustment factor
+        estimated_rent = base_rent * adjustment_factor
+
+        if adjustment_reasons:
+            assumptions_list.append(f"Adjustments applied: {', '.join(adjustment_reasons)}")
+            assumptions_list.append(f"Final adjustment factor: {adjustment_factor:.2f}x")
+
+        # Step 5: Create range (±10%)
+        low_estimate = estimated_rent * 0.90
+        high_estimate = estimated_rent * 1.10
 
         # Cap confidence at 0.75 (never claim high confidence for AI estimates)
         confidence = min(confidence, 0.75)
 
-        assumptions_text = "; ".join(assumptions_list) if assumptions_list else "Using general market patterns only"
+        assumptions_text = "; ".join(assumptions_list) if assumptions_list else "Using formula-based estimation"
 
         return {
             'estimated': round(estimated_rent, 2),
