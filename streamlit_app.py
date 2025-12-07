@@ -118,25 +118,15 @@ with tab1:
     # Expense Assumptions
     st.header("📊 Expense Assumptions")
     st.info("💡 **Expenses calculated: P&I (Principal & Interest), Property Taxes, and Insurance only**")
+    st.success("✓ **Property taxes are automatically calculated** using exact SC county millage rates for SC addresses, or US average (1.2%) for other locations.")
 
-    col1, col2 = st.columns(2)
-    with col1:
-        property_tax_rate = st.number_input(
-            "Property Tax Rate % (default 1.2%)",
-            min_value=0.0,
-            max_value=10.0,
-            value=1.2,
-            step=0.1,
-            help="Annual property tax rate. US average is ~1.2% but varies greatly by location."
-        )
-    with col2:
-        insurance_monthly = st.number_input(
-            "Insurance ($/month, default $150)",
-            min_value=0,
-            value=150,
-            step=10,
-            help="Monthly homeowners insurance cost. Get actual quote for accuracy."
-        )
+    insurance_monthly = st.number_input(
+        "Insurance ($/month, default $150)",
+        min_value=0,
+        value=150,
+        step=10,
+        help="Monthly homeowners insurance cost. Get actual quote for accuracy."
+    )
 
     st.warning("⚠️ Note: This calculator does NOT include maintenance, property management, HOA, utilities, or other operating expenses. Actual cashflow will be lower.")
 
@@ -152,7 +142,6 @@ with tab1:
                 'interest_rate_annual': interest_rate_annual / 100,
                 'term_years': term_years,
                 'interest_only': interest_only,
-                'property_tax_rate': property_tax_rate / 100,
                 'insurance_monthly': insurance_monthly
             }
 

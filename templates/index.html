@@ -130,13 +130,8 @@
             <section class="form-section">
                 <h2>📊 Expense Assumptions</h2>
                 <p class="section-note">💡 Expenses calculated: <strong>P&I (Principal & Interest), Property Taxes, and Insurance only</strong></p>
+                <p class="section-note" style="color: #059669;">✓ <strong>Property taxes are automatically calculated</strong> using exact SC county millage rates for SC addresses, or US average (1.2%) for other locations.</p>
                 <div class="form-row">
-                    <div class="form-group">
-                        <label for="property_tax_rate">Property Tax Rate % (default 1.2%)</label>
-                        <input type="number" id="property_tax_rate" name="property_tax_rate"
-                               placeholder="1.2" min="0" max="10" step="0.1">
-                        <small>Annual property tax rate. US average is ~1.2% but varies greatly by location.</small>
-                    </div>
                     <div class="form-group">
                         <label for="insurance_monthly">Insurance ($/month, default $150)</label>
                         <input type="number" id="insurance_monthly" name="insurance_monthly"
@@ -304,7 +299,6 @@
                 baths: document.getElementById('baths').value,
                 sqft: document.getElementById('sqft').value,
                 condition: document.getElementById('condition').value,
-                property_tax_rate: document.getElementById('property_tax_rate').value,
                 insurance_monthly: document.getElementById('insurance_monthly').value
             };
 
