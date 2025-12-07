@@ -9,6 +9,13 @@ import json
 import math
 from typing import Dict, Optional, Any
 
+# Import SC tax calculator
+try:
+    from sc_tax_calculator import SCTaxCalculator
+    SC_TAX_AVAILABLE = True
+except ImportError:
+    SC_TAX_AVAILABLE = False
+
 
 class AIRentDSCRCalculator:
     """
@@ -20,6 +27,14 @@ class AIRentDSCRCalculator:
 
     def __init__(self):
         self.mode = "ai_rent_and_dscr"
+        # Initialize SC tax calculator if available
+        if SC_TAX_AVAILABLE:
+            try:
+                self.sc_tax_calculator = SCTaxCalculator()
+            except Exception:
+                self.sc_tax_calculator = None
+        else:
+            self.sc_tax_calculator = None
 
     def calculate(
         self,
@@ -92,11 +107,36 @@ class AIRentDSCRCalculator:
         assumptions = rent_estimates['assumptions']
 
         # Step 3: Calculate property taxes
-        if property_tax_rate is None:
-            property_tax_rate = 0.012  # Default 1.2% annually (US average)
-
-        property_tax_annual = purchase_price * property_tax_rate
-        property_tax_monthly = property_tax_annual / 12
+        # Try to use SC tax calculator for South Carolina properties
+        sc_tax_result = None
+        if self.sc_tax_calculator is not None:
+            try:
+                sc_tax_result = self.sc_tax_calculator.calculate_tax(address, purchase_price)
+                if sc_tax_result['tax_accuracy'] == 'ok':
+                    # Use SC tax calculation
+                    property_tax_annual = sc_tax_result['annual_taxes']
+                    property_tax_monthly = sc_tax_result['monthly_taxes']
+                    property_tax_rate = None  # Not applicable for SC (uses millage)
+                else:
+                    # SC property but county not found or missing value
+                    sc_tax_result = None
+                    if property_tax_rate is None:
+                        property_tax_rate = 0.012  # Default 1.2% annually (US average)
+                    property_tax_annual = purchase_price * property_tax_rate
+                    property_tax_monthly = property_tax_annual / 12
+            except Exception:
+                # Fall back to default
+                sc_tax_result = None
+                if property_tax_rate is None:
+                    property_tax_rate = 0.012  # Default 1.2% annually (US average)
+                property_tax_annual = purchase_price * property_tax_rate
+                property_tax_monthly = property_tax_annual / 12
+        else:
+            # SC tax calculator not available, use default
+            if property_tax_rate is None:
+                property_tax_rate = 0.012  # Default 1.2% annually (US average)
+            property_tax_annual = purchase_price * property_tax_rate
+            property_tax_monthly = property_tax_annual / 12
 
         # Step 4: Set insurance
         if insurance_monthly is None:
@@ -171,7 +211,7 @@ class AIRentDSCRCalculator:
         )
 
         # Return complete result
-        return {
+        result = {
             "mode": self.mode,
 
             "address": address,
@@ -217,6 +257,12 @@ class AIRentDSCRCalculator:
             "notes_for_investor": notes_for_investor,
             "disclaimer": disclaimer
         }
+
+        # Add SC tax details if available
+        if sc_tax_result is not None:
+            result["sc_tax_calculation"] = sc_tax_result
+
+        return result
 
     def _calculate_loan_amount(
         self,

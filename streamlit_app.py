@@ -236,7 +236,19 @@ with tab2:
 
         with col2:
             st.markdown("**Monthly Expenses (PITI):**")
-            st.write(f"- Property Taxes: ${result['property_tax_monthly']:,.2f}")
+
+            # Show SC tax details if available
+            if 'sc_tax_calculation' in result and result['sc_tax_calculation'] is not None:
+                sc_tax = result['sc_tax_calculation']
+                st.write(f"- Property Taxes: ${result['property_tax_monthly']:,.2f}")
+                st.caption(f"  ✓ SC {sc_tax['county_name']} (Millage: {sc_tax['millage_rate']:.5f})")
+                st.caption(f"  Assessment Ratio: {sc_tax['assessment_ratio']:.2%}")
+                st.caption(f"  Taxable Value: ${sc_tax['taxable_value']:,.2f}")
+            else:
+                st.write(f"- Property Taxes: ${result['property_tax_monthly']:,.2f}")
+                if result.get('property_tax_rate'):
+                    st.caption(f"  (Generic rate: {result['property_tax_rate']*100:.2f}%)")
+
             st.write(f"- Insurance: ${result['insurance_monthly']:,.2f}")
             st.write(f"- P&I (Debt Service): ${result['monthly_debt_service']:,.2f}")
             total_monthly = result['property_tax_monthly'] + result['insurance_monthly'] + result['monthly_debt_service']

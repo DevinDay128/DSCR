@@ -209,6 +209,11 @@
                             <td>Property Taxes:</td>
                             <td class="text-right">$<span id="property_tax_monthly_result"></span></td>
                         </tr>
+                        <tr id="sc_tax_details_row" style="display: none;">
+                            <td colspan="2" style="font-size: 0.9em; padding-left: 30px; color: #059669;">
+                                <span id="sc_tax_details"></span>
+                            </td>
+                        </tr>
                         <tr>
                             <td>Insurance:</td>
                             <td class="text-right">$<span id="insurance_monthly_result"></span></td>
@@ -355,6 +360,19 @@
 
             // Expense breakdown
             document.getElementById('property_tax_monthly_result').textContent = formatNumber(result.property_tax_monthly);
+
+            // Show SC tax details if available
+            if (result.sc_tax_calculation && result.sc_tax_calculation.tax_accuracy === 'ok') {
+                const scTax = result.sc_tax_calculation;
+                const scTaxDetails = `✓ SC ${scTax.county_name} (Millage: ${scTax.millage_rate.toFixed(5)}) | ` +
+                    `Assessment Ratio: ${(scTax.assessment_ratio * 100).toFixed(0)}% | ` +
+                    `Taxable Value: $${formatNumber(scTax.taxable_value)}`;
+                document.getElementById('sc_tax_details').textContent = scTaxDetails;
+                document.getElementById('sc_tax_details_row').style.display = 'table-row';
+            } else {
+                document.getElementById('sc_tax_details_row').style.display = 'none';
+            }
+
             document.getElementById('insurance_monthly_result').textContent = formatNumber(result.insurance_monthly);
             document.getElementById('monthly_debt_result').textContent = formatNumber(result.monthly_debt_service);
 
