@@ -7,7 +7,10 @@ Debt Service Coverage Ratio (DSCR) for investment properties.
 
 import json
 import math
+import os
+import re
 from typing import Dict, Optional, Any
+from pathlib import Path
 
 
 class AIRentDSCRCalculator:
@@ -20,6 +23,189 @@ class AIRentDSCRCalculator:
 
     def __init__(self):
         self.mode = "ai_rent_and_dscr"
+        self.sc_millage_data = self._load_sc_millage_data()
+
+    def _load_sc_millage_data(self) -> Dict[str, Any]:
+        """Load South Carolina county millage rates from JSON file."""
+        try:
+            json_path = Path(__file__).parent / "sc_county_base_millage_2024.json"
+            with open(json_path, 'r') as f:
+                return json.load(f)
+        except Exception:
+            # If file not found or error, return empty structure
+            return {"metadata": {}, "counties": {}}
+
+    def _detect_sc_county(self, address: str) -> Optional[str]:
+        """
+        Detect South Carolina county from address.
+
+        Returns normalized county name (e.g., "Horry") or None if not SC or not found.
+        """
+        if not address:
+            return None
+
+        address_upper = address.upper()
+
+        # Check if address is in South Carolina
+        if not (' SC' in address_upper or 'SOUTH CAROLINA' in address_upper):
+            return None
+
+        # SC County name mapping (common variations)
+        county_patterns = {
+            'ABBEVILLE': 'Abbeville',
+            'AIKEN': 'Aiken',
+            'ALLENDALE': 'Allendale',
+            'ANDERSON': 'Anderson',
+            'BAMBERG': 'Bamberg',
+            'BARNWELL': 'Barnwell',
+            'BEAUFORT': 'Beaufort',
+            'BERKELEY': 'Berkeley',
+            'CALHOUN': 'Calhoun',
+            'CHARLESTON': 'Charleston',
+            'CHEROKEE': 'Cherokee',
+            'CHESTER': 'Chester',
+            'CHESTERFIELD': 'Chesterfield',
+            'CLARENDON': 'Clarendon',
+            'COLLETON': 'Colleton',
+            'DARLINGTON': 'Darlington',
+            'DILLON': 'Dillon',
+            'DORCHESTER': 'Dorchester',
+            'EDGEFIELD': 'Edgefield',
+            'FAIRFIELD': 'Fairfield',
+            'FLORENCE': 'Florence',
+            'GEORGETOWN': 'Georgetown',
+            'GREENVILLE': 'Greenville',
+            'GREENWOOD': 'Greenwood',
+            'HAMPTON': 'Hampton',
+            'HORRY': 'Horry',
+            'JASPER': 'Jasper',
+            'KERSHAW': 'Kershaw',
+            'LANCASTER': 'Lancaster',
+            'LAURENS': 'Laurens',
+            'LEE': 'Lee',
+            'LEXINGTON': 'Lexington',
+            'MCCORMICK': 'McCormick',
+            'MARION': 'Marion',
+            'MARLBORO': 'Marlboro',
+            'NEWBERRY': 'Newberry',
+            'OCONEE': 'Oconee',
+            'ORANGEBURG': 'Orangeburg',
+            'PICKENS': 'Pickens',
+            'RICHLAND': 'Richland',
+            'SALUDA': 'Saluda',
+            'SPARTANBURG': 'Spartanburg',
+            'SUMTER': 'Sumter',
+            'UNION': 'Union',
+            'WILLIAMSBURG': 'Williamsburg',
+            'YORK': 'York'
+        }
+
+        # Also map common city names to counties
+        city_to_county = {
+            'MYRTLE BEACH': 'Horry',
+            'NORTH MYRTLE BEACH': 'Horry',
+            'LITTLE RIVER': 'Horry',
+            'SURFSIDE BEACH': 'Horry',
+            'COLUMBIA': 'Richland',
+            'CHARLESTON': 'Charleston',
+            'GREENVILLE': 'Greenville',
+            'SPARTANBURG': 'Spartanburg',
+            'HILTON HEAD': 'Beaufort',
+            'BLUFFTON': 'Beaufort',
+            'MOUNT PLEASANT': 'Charleston',
+            'SUMMERVILLE': 'Dorchester',
+            'ROCK HILL': 'York',
+            'AIKEN': 'Aiken',
+            'FLORENCE': 'Florence',
+            'ANDERSON': 'Anderson'
+        }
+
+        # Check for direct county name mentions
+        for pattern, county_name in county_patterns.items():
+            if pattern in address_upper:
+                return county_name
+
+        # Check for city names
+        for city, county_name in city_to_county.items():
+            if city in address_upper:
+                return county_name
+
+        # Try ZIP code mapping for common SC coastal areas
+        zip_patterns = {
+            r'29566|29568|29572|29575|29576|29577|29578|29579|29588': 'Horry',  # Myrtle Beach area
+            r'29902|29910|29926|29928': 'Beaufort',  # Hilton Head area
+            r'29401|29403|29407|29412|29414|29424|29425|29492': 'Charleston',
+            r'29201|29203|29204|29205|29206|29209|29210|29223': 'Richland',  # Columbia
+            r'29601|29605|29607|29609|29615|29617': 'Greenville'
+        }
+
+        for zip_pattern, county_name in zip_patterns.items():
+            if re.search(zip_pattern, address_upper):
+                return county_name
+
+        return None
+
+    def _calculate_sc_property_tax(
+        self,
+        purchase_price: float,
+        county_name: Optional[str]
+    ) -> Dict[str, Any]:
+        """
+        Calculate South Carolina property tax using exact formula.
+
+        Formula:
+        - Assessment Ratio = 0.06 (6% for rental/investment properties)
+        - Taxable Value = Purchase Price × 0.06
+        - Annual Taxes = Taxable Value × Millage Rate
+        - Monthly Taxes = Annual Taxes / 12
+
+        Returns dict with tax calculation details.
+        """
+        result = {
+            "county_name": county_name,
+            "millage_rate": None,
+            "assessment_ratio": None,
+            "taxable_value": None,
+            "annual_taxes": None,
+            "monthly_taxes": None,
+            "tax_accuracy": "missing_value"
+        }
+
+        # Check if we have a valid purchase price
+        if not purchase_price or purchase_price <= 0:
+            result["tax_accuracy"] = "missing_value"
+            return result
+
+        # Check if county was detected
+        if not county_name:
+            result["tax_accuracy"] = "county_not_found"
+            return result
+
+        # Look up millage rate from JSON
+        counties_data = self.sc_millage_data.get("counties", {})
+        millage_rate = counties_data.get(county_name)
+
+        if millage_rate is None:
+            result["tax_accuracy"] = "county_not_found"
+            return result
+
+        # Apply SC tax formula EXACTLY
+        ASSESSMENT_RATIO = 0.06  # 6% for rental/investment properties
+
+        taxable_value = purchase_price * ASSESSMENT_RATIO
+        annual_taxes = taxable_value * millage_rate
+        monthly_taxes = annual_taxes / 12
+
+        result.update({
+            "millage_rate": millage_rate,
+            "assessment_ratio": ASSESSMENT_RATIO,
+            "taxable_value": round(taxable_value, 2),
+            "annual_taxes": round(annual_taxes, 2),
+            "monthly_taxes": round(monthly_taxes, 2),
+            "tax_accuracy": "ok"
+        })
+
+        return result
 
     def calculate(
         self,
@@ -92,11 +278,32 @@ class AIRentDSCRCalculator:
         assumptions = rent_estimates['assumptions']
 
         # Step 3: Calculate property taxes
-        if property_tax_rate is None:
-            property_tax_rate = 0.012  # Default 1.2% annually (US average)
+        # Try SC automatic calculation first
+        sc_county = self._detect_sc_county(address)
+        sc_tax_calc = None
 
-        property_tax_annual = purchase_price * property_tax_rate
-        property_tax_monthly = property_tax_annual / 12
+        if sc_county:
+            # South Carolina property - use automatic tax calculation
+            sc_tax_calc = self._calculate_sc_property_tax(purchase_price, sc_county)
+
+            if sc_tax_calc["tax_accuracy"] == "ok":
+                # Use SC calculated taxes
+                property_tax_annual = sc_tax_calc["annual_taxes"]
+                property_tax_monthly = sc_tax_calc["monthly_taxes"]
+                property_tax_rate = sc_tax_calc["annual_taxes"] / purchase_price  # Back-calculate rate for display
+            else:
+                # SC county detected but calculation failed - use manual/default
+                if property_tax_rate is None:
+                    property_tax_rate = 0.012  # Default 1.2% annually
+                property_tax_annual = purchase_price * property_tax_rate
+                property_tax_monthly = property_tax_annual / 12
+        else:
+            # Not SC or non-SC property - use manual tax rate
+            if property_tax_rate is None:
+                property_tax_rate = 0.012  # Default 1.2% annually (US average)
+
+            property_tax_annual = purchase_price * property_tax_rate
+            property_tax_monthly = property_tax_annual / 12
 
         # Step 4: Set insurance
         if insurance_monthly is None:
@@ -194,6 +401,9 @@ class AIRentDSCRCalculator:
             "property_tax_annual": property_tax_annual,
             "insurance_monthly": insurance_monthly,
             "insurance_annual": insurance_monthly * 12,
+
+            # SC tax calculation details (if applicable)
+            "sc_tax_calculation": sc_tax_calc if sc_tax_calc else None,
 
             "effective_gross_income_monthly": effective_gross_income_monthly,
             "monthly_operating_expenses": monthly_operating_expenses,

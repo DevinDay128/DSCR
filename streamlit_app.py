@@ -247,6 +247,22 @@ with tab2:
             st.write(f"- Annual Debt Service: ${result['annual_debt_service']:,.2f}")
             st.write(f"- **DSCR Ratio: {result['DSCR']:.2f}**")
 
+        # SC Tax Calculation Details (if applicable)
+        if result.get('sc_tax_calculation') and result['sc_tax_calculation']['tax_accuracy'] == 'ok':
+            st.divider()
+            st.success("🏛️ **South Carolina Tax Calculation (Automatic)**")
+            sc_tax = result['sc_tax_calculation']
+            col1, col2 = st.columns(2)
+            with col1:
+                st.write(f"**County:** {sc_tax['county_name']}")
+                st.write(f"**Assessment Ratio:** {sc_tax['assessment_ratio']*100:.1f}% (Rental Property)")
+                st.write(f"**Millage Rate:** {sc_tax['millage_rate']:.3f}")
+            with col2:
+                st.write(f"**Taxable Value:** ${sc_tax['taxable_value']:,.2f}")
+                st.write(f"**Annual Taxes:** ${sc_tax['annual_taxes']:,.2f}")
+                st.write(f"**Monthly Taxes:** ${sc_tax['monthly_taxes']:,.2f}")
+            st.caption("✓ Taxes calculated automatically using official 2024 SC county millage rates.")
+
         st.divider()
 
         # Summary

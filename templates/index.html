@@ -241,6 +241,34 @@
                     </table>
                 </div>
 
+                <!-- SC Tax Calculation Details (if applicable) -->
+                <div id="sc_tax_details" class="sc-tax-box" style="display: none;">
+                    <h4>🏛️ South Carolina Tax Calculation</h4>
+                    <p><strong>County:</strong> <span id="sc_county_name"></span></p>
+                    <p><strong>Method:</strong> Automatic calculation using SC millage rates</p>
+                    <table style="margin-top: 10px;">
+                        <tr>
+                            <td>Assessment Ratio (Rental):</td>
+                            <td class="text-right"><span id="sc_assessment_ratio"></span>%</td>
+                        </tr>
+                        <tr>
+                            <td>Millage Rate:</td>
+                            <td class="text-right"><span id="sc_millage_rate"></span></td>
+                        </tr>
+                        <tr>
+                            <td>Taxable Value:</td>
+                            <td class="text-right">$<span id="sc_taxable_value"></span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Annual Taxes:</strong></td>
+                            <td class="text-right"><strong>$<span id="sc_annual_taxes"></span></strong></td>
+                        </tr>
+                    </table>
+                    <p style="margin-top: 10px; font-size: 0.9em; color: #059669;">
+                        ✓ Taxes calculated automatically for South Carolina rental properties using official 2024 county millage rates.
+                    </p>
+                </div>
+
                 <div class="summary-box">
                     <h4>Summary</h4>
                     <p id="human_summary"></p>
@@ -366,6 +394,18 @@
             document.getElementById('noi_annual_result').textContent = formatNumber(result.NOI_annual);
             document.getElementById('annual_debt_result').textContent = formatNumber(result.annual_debt_service);
             document.getElementById('dscr_table').textContent = result.DSCR.toFixed(2);
+
+            // SC Tax Calculation Details (if applicable)
+            if (result.sc_tax_calculation && result.sc_tax_calculation.tax_accuracy === 'ok') {
+                document.getElementById('sc_tax_details').style.display = 'block';
+                document.getElementById('sc_county_name').textContent = result.sc_tax_calculation.county_name;
+                document.getElementById('sc_assessment_ratio').textContent = (result.sc_tax_calculation.assessment_ratio * 100).toFixed(1);
+                document.getElementById('sc_millage_rate').textContent = result.sc_tax_calculation.millage_rate.toFixed(3);
+                document.getElementById('sc_taxable_value').textContent = formatNumber(result.sc_tax_calculation.taxable_value);
+                document.getElementById('sc_annual_taxes').textContent = formatNumber(result.sc_tax_calculation.annual_taxes);
+            } else {
+                document.getElementById('sc_tax_details').style.display = 'none';
+            }
 
             document.getElementById('human_summary').textContent = result.human_summary;
             document.getElementById('assumptions').textContent = result.assumptions;
