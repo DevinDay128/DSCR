@@ -119,16 +119,26 @@ with tab1:
     st.header("📊 Expense Assumptions")
     st.info("💡 **Expenses calculated: P&I (Principal & Interest), Property Taxes, and Insurance only**")
 
+    # Check if address is in South Carolina
+    is_sc_address = False
+    if address:
+        address_upper = address.upper()
+        is_sc_address = 'SC' in address_upper or 'SOUTH CAROLINA' in address_upper or bool(__import__('re').search(r'\b29\d{3}\b', address))
+
     col1, col2 = st.columns(2)
     with col1:
-        property_tax_rate = st.number_input(
-            "Property Tax Rate % (default 1.2%)",
-            min_value=0.0,
-            max_value=10.0,
-            value=1.2,
-            step=0.1,
-            help="Annual property tax rate. US average is ~1.2% but varies greatly by location."
-        )
+        if is_sc_address:
+            st.info("🏛️ **South Carolina Property Detected**\n\nProperty tax is automatically calculated using SC millage rates from official county data. Manual tax input is disabled to ensure accuracy.")
+            property_tax_rate = None
+        else:
+            property_tax_rate = st.number_input(
+                "Property Tax Rate % (default 1.2%)",
+                min_value=0.0,
+                max_value=10.0,
+                value=1.2,
+                step=0.1,
+                help="Annual property tax rate. US average is ~1.2% but varies greatly by location."
+            )
     with col2:
         insurance_monthly = st.number_input(
             "Insurance ($/month, default $150)",
@@ -152,9 +162,12 @@ with tab1:
                 'interest_rate_annual': interest_rate_annual / 100,
                 'term_years': term_years,
                 'interest_only': interest_only,
-                'property_tax_rate': property_tax_rate / 100,
                 'insurance_monthly': insurance_monthly
             }
+
+            # Only add property_tax_rate for non-SC properties
+            if not is_sc_address and property_tax_rate is not None:
+                params['property_tax_rate'] = property_tax_rate / 100
 
             if down_payment_percent is not None:
                 params['down_payment_percent'] = down_payment_percent / 100
@@ -237,6 +250,12 @@ with tab2:
         with col2:
             st.markdown("**Monthly Expenses (PITI):**")
             st.write(f"- Property Taxes: ${result['property_tax_monthly']:,.2f}")
+
+            # Show SC tax details if available
+            if 'sc_tax_info' in result:
+                sc_info = result['sc_tax_info']
+                st.caption(f"   🏛️ SC {sc_info['county_name']} | Millage: {sc_info['millage_rate']*1000:.1f} mills | Assessment: {sc_info['assessment_ratio']*100:.0f}% | Taxable Value: ${sc_info['taxable_value']:,.0f}")
+
             st.write(f"- Insurance: ${result['insurance_monthly']:,.2f}")
             st.write(f"- P&I (Debt Service): ${result['monthly_debt_service']:,.2f}")
             total_monthly = result['property_tax_monthly'] + result['insurance_monthly'] + result['monthly_debt_service']

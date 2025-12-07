@@ -58,7 +58,12 @@ def calculate():
             params['condition'] = data['condition']
 
         # Expense assumptions
-        if data.get('property_tax_rate'):
+        # NOTE: For SC properties, tax rate is automatically calculated from millage
+        # and user input is ignored to ensure deterministic tax calculation
+        address_upper = params['address'].upper()
+        is_sc_address = 'SC' in address_upper or 'SOUTH CAROLINA' in address_upper
+
+        if not is_sc_address and data.get('property_tax_rate'):
             params['property_tax_rate'] = float(data['property_tax_rate']) / 100
         if data.get('insurance_monthly'):
             params['insurance_monthly'] = float(data['insurance_monthly'])

@@ -8,6 +8,7 @@ Debt Service Coverage Ratio (DSCR) for investment properties.
 import json
 import math
 from typing import Dict, Optional, Any
+from sc_tax_calculator import SCTaxCalculator
 
 
 class AIRentDSCRCalculator:
@@ -20,6 +21,7 @@ class AIRentDSCRCalculator:
 
     def __init__(self):
         self.mode = "ai_rent_and_dscr"
+        self.sc_tax_calculator = SCTaxCalculator()
 
     def calculate(
         self,
@@ -91,12 +93,29 @@ class AIRentDSCRCalculator:
         confidence_score = rent_estimates['confidence']
         assumptions = rent_estimates['assumptions']
 
-        # Step 3: Calculate property taxes
-        if property_tax_rate is None:
-            property_tax_rate = 0.012  # Default 1.2% annually (US average)
+        # Step 2.5: Check if this is a South Carolina property and use deterministic tax calculation
+        sc_tax_result = self.sc_tax_calculator.calculate_sc_rental_tax(
+            address=address,
+            property_value=purchase_price
+        )
 
-        property_tax_annual = purchase_price * property_tax_rate
-        property_tax_monthly = property_tax_annual / 12
+        # Store SC tax information
+        is_sc_property = sc_tax_result['tax_accuracy'] == 'ok'
+        sc_tax_info = sc_tax_result if is_sc_property else None
+
+        # Step 3: Calculate property taxes
+        if is_sc_property:
+            # Use SC deterministic tax calculation
+            property_tax_rate = None  # Not applicable for SC (uses millage instead)
+            property_tax_annual = sc_tax_result['annual_taxes']
+            property_tax_monthly = sc_tax_result['monthly_taxes']
+        else:
+            # Use standard tax calculation for non-SC properties
+            if property_tax_rate is None:
+                property_tax_rate = 0.012  # Default 1.2% annually (US average)
+
+            property_tax_annual = purchase_price * property_tax_rate
+            property_tax_monthly = property_tax_annual / 12
 
         # Step 4: Set insurance
         if insurance_monthly is None:
@@ -171,7 +190,7 @@ class AIRentDSCRCalculator:
         )
 
         # Return complete result
-        return {
+        result = {
             "mode": self.mode,
 
             "address": address,
@@ -217,6 +236,12 @@ class AIRentDSCRCalculator:
             "notes_for_investor": notes_for_investor,
             "disclaimer": disclaimer
         }
+
+        # Add SC tax information if this is a SC property
+        if is_sc_property:
+            result["sc_tax_info"] = sc_tax_info
+
+        return result
 
     def _calculate_loan_amount(
         self,

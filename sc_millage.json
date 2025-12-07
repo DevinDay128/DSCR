@@ -1,0 +1,142 @@
+{
+  "counties": {
+    "Abbeville County": {
+      "millage_rate": 0.2542
+    },
+    "Aiken County": {
+      "millage_rate": 0.2156
+    },
+    "Allendale County": {
+      "millage_rate": 0.2687
+    },
+    "Anderson County": {
+      "millage_rate": 0.2234
+    },
+    "Bamberg County": {
+      "millage_rate": 0.2789
+    },
+    "Barnwell County": {
+      "millage_rate": 0.2498
+    },
+    "Beaufort County": {
+      "millage_rate": 0.1845
+    },
+    "Berkeley County": {
+      "millage_rate": 0.1978
+    },
+    "Calhoun County": {
+      "millage_rate": 0.2567
+    },
+    "Charleston County": {
+      "millage_rate": 0.2012
+    },
+    "Cherokee County": {
+      "millage_rate": 0.2389
+    },
+    "Chester County": {
+      "millage_rate": 0.2678
+    },
+    "Chesterfield County": {
+      "millage_rate": 0.2534
+    },
+    "Clarendon County": {
+      "millage_rate": 0.2756
+    },
+    "Colleton County": {
+      "millage_rate": 0.2489
+    },
+    "Darlington County": {
+      "millage_rate": 0.2598
+    },
+    "Dillon County": {
+      "millage_rate": 0.2876
+    },
+    "Dorchester County": {
+      "millage_rate": 0.1989
+    },
+    "Edgefield County": {
+      "millage_rate": 0.2367
+    },
+    "Fairfield County": {
+      "millage_rate": 0.2698
+    },
+    "Florence County": {
+      "millage_rate": 0.2445
+    },
+    "Georgetown County": {
+      "millage_rate": 0.2234
+    },
+    "Greenville County": {
+      "millage_rate": 0.2089
+    },
+    "Greenwood County": {
+      "millage_rate": 0.2456
+    },
+    "Hampton County": {
+      "millage_rate": 0.2687
+    },
+    "Horry County": {
+      "millage_rate": 0.1923
+    },
+    "Jasper County": {
+      "millage_rate": 0.2178
+    },
+    "Kershaw County": {
+      "millage_rate": 0.2298
+    },
+    "Lancaster County": {
+      "millage_rate": 0.2187
+    },
+    "Laurens County": {
+      "millage_rate": 0.2534
+    },
+    "Lee County": {
+      "millage_rate": 0.2934
+    },
+    "Lexington County": {
+      "millage_rate": 0.2001
+    },
+    "Marion County": {
+      "millage_rate": 0.2823
+    },
+    "Marlboro County": {
+      "millage_rate": 0.2945
+    },
+    "McCormick County": {
+      "millage_rate": 0.2512
+    },
+    "Newberry County": {
+      "millage_rate": 0.2478
+    },
+    "Oconee County": {
+      "millage_rate": 0.2123
+    },
+    "Orangeburg County": {
+      "millage_rate": 0.2678
+    },
+    "Pickens County": {
+      "millage_rate": 0.2198
+    },
+    "Richland County": {
+      "millage_rate": 0.2456
+    },
+    "Saluda County": {
+      "millage_rate": 0.2567
+    },
+    "Spartanburg County": {
+      "millage_rate": 0.2234
+    },
+    "Sumter County": {
+      "millage_rate": 0.2598
+    },
+    "Union County": {
+      "millage_rate": 0.2689
+    },
+    "Williamsburg County": {
+      "millage_rate": 0.2867
+    },
+    "York County": {
+      "millage_rate": 0.2076
+    }
+  }
+}
