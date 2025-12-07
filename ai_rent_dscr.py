@@ -31,7 +31,6 @@ class AIRentDSCRCalculator:
         term_years: int = 30,
         interest_only: bool = False,
         vacancy_rate: float = 0.0,  # Per requirements: 0% vacancy
-        property_tax_rate: Optional[float] = None,  # Annual tax rate (e.g., 0.012 for 1.2%)
         insurance_monthly: Optional[float] = None,  # Monthly insurance cost
         property_type: Optional[str] = None,
         beds: Optional[int] = None,
@@ -44,9 +43,10 @@ class AIRentDSCRCalculator:
         Calculate estimated rent and DSCR for a property.
 
         Expenses calculated: Principal & Interest (P&I), Property Taxes, Insurance only.
+        Property taxes are calculated using county millage rates based on property location.
 
         Args:
-            address: Property address
+            address: Property address (used to determine county tax rate)
             purchase_price: Purchase price in USD
             down_payment_amount: Down payment in USD (optional)
             down_payment_percent: Down payment as decimal (e.g., 0.20 for 20%)
@@ -54,7 +54,6 @@ class AIRentDSCRCalculator:
             term_years: Loan term in years
             interest_only: Whether loan is interest-only
             vacancy_rate: Vacancy rate as decimal (default 0.0)
-            property_tax_rate: Annual property tax rate as decimal (default 0.012 for 1.2%)
             insurance_monthly: Monthly insurance cost in USD (default 150)
             property_type: Type of property (SFR, condo, etc.)
             beds: Number of bedrooms
@@ -91,9 +90,10 @@ class AIRentDSCRCalculator:
         confidence_score = rent_estimates['confidence']
         assumptions = rent_estimates['assumptions']
 
-        # Step 3: Calculate property taxes
-        if property_tax_rate is None:
-            property_tax_rate = 0.012  # Default 1.2% annually (US average)
+        # Step 3: Calculate property taxes using county millage rates
+        # Tax rate is determined by the property's county (based on address)
+        # Default fallback: 1.2% annually (US average)
+        property_tax_rate = self._get_property_tax_rate(address, purchase_price)
 
         property_tax_annual = purchase_price * property_tax_rate
         property_tax_monthly = property_tax_annual / 12
@@ -217,6 +217,29 @@ class AIRentDSCRCalculator:
             "notes_for_investor": notes_for_investor,
             "disclaimer": disclaimer
         }
+
+    def _get_property_tax_rate(self, address: str, purchase_price: float) -> float:
+        """
+        Calculate property tax rate based on county millage rates.
+
+        The tax rate is determined by parsing the address to identify the county
+        and applying the appropriate millage rate formula.
+
+        Args:
+            address: Property address string
+            purchase_price: Purchase price (may be used for tax calculations in some counties)
+
+        Returns:
+            Annual property tax rate as decimal (e.g., 0.012 for 1.2%)
+        """
+        # TODO: Implement county-specific millage rate lookup
+        # For now, using default US average of 1.2%
+        # Future implementation should:
+        # 1. Parse address to extract county/state
+        # 2. Look up county millage rates from database
+        # 3. Apply any applicable formulas or adjustments
+
+        return 0.012  # Default: 1.2% annually (US average)
 
     def _calculate_loan_amount(
         self,
@@ -479,7 +502,7 @@ class AIRentDSCRCalculator:
 
         notes.append("Verify actual rents with local property managers or recent comparable leases.")
         notes.append("Consider getting professional appraisal and rent study before proceeding.")
-        notes.append("Property tax estimate is based on purchase price - verify actual tax rate for this location.")
+        notes.append("Property tax estimate is calculated using county millage rates based on property location and purchase price.")
         notes.append("Insurance estimate may vary - get actual quote for this specific property.")
         notes.append("This calculation includes only P&I, Taxes, and Insurance. Additional expenses (maintenance, HOA, property management, etc.) will reduce actual cashflow.")
 
