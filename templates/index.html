@@ -76,6 +76,12 @@
                         </select>
                     </div>
                 </div>
+                <div class="form-group">
+                    <label for="mls_description">MLS Description</label>
+                    <textarea id="mls_description" name="mls_description" rows="4"
+                              placeholder="Enter MLS listing description here for enhanced rent estimation. Include details like: school district quality, nearby amenities (beach, downtown, employers), property features (pool, gym, garage, yard), etc."></textarea>
+                    <small>💡 Tip: Including MLS description enables fact-checking of features like school districts, coastal proximity, major employers, amenities, and more for more accurate rent estimates.</small>
+                </div>
             </section>
 
             <!-- Loan Terms -->
@@ -299,6 +305,7 @@
                 baths: document.getElementById('baths').value,
                 sqft: document.getElementById('sqft').value,
                 condition: document.getElementById('condition').value,
+                mls_description: document.getElementById('mls_description').value,
                 property_tax_rate: document.getElementById('property_tax_rate').value,
                 insurance_monthly: document.getElementById('insurance_monthly').value
             };

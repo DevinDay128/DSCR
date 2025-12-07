@@ -98,6 +98,14 @@ with tab1:
     with col3:
         condition = st.selectbox("Condition", ["", "Excellent", "Good", "Average", "Fair", "Poor", "Fixer"])
 
+    # MLS Description
+    mls_description = st.text_area(
+        "MLS Description",
+        placeholder="Enter MLS listing description here for enhanced rent estimation. Include details like: school district quality, nearby amenities (beach, downtown, employers), property features (pool, gym, garage, yard), etc.",
+        height=100,
+        help="Including MLS description enables fact-checking of features like school districts, coastal proximity, major employers, amenities, and more for more accurate rent estimates."
+    )
+
     # Loan Terms
     st.header("💰 Loan Terms")
     col1, col2 = st.columns(2)
@@ -170,6 +178,8 @@ with tab1:
                 params['sqft'] = sqft
             if condition:
                 params['condition'] = condition
+            if mls_description:
+                params['mls_description'] = mls_description
 
             # Calculate
             try:

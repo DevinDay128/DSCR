@@ -56,6 +56,8 @@ def calculate():
             params['sqft'] = int(data['sqft'])
         if data.get('condition'):
             params['condition'] = data['condition']
+        if data.get('mls_description'):
+            params['mls_description'] = data['mls_description']
 
         # Expense assumptions
         if data.get('property_tax_rate'):
