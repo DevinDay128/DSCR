@@ -217,7 +217,6 @@ class AIRentDSCRCalculator:
         term_years: int = 30,
         interest_only: bool = False,
         vacancy_rate: float = 0.0,  # Per requirements: 0% vacancy
-        property_tax_rate: Optional[float] = None,  # Annual tax rate (e.g., 0.012 for 1.2%)
         insurance_monthly: Optional[float] = None,  # Monthly insurance cost
         property_type: Optional[str] = None,
         beds: Optional[int] = None,
@@ -230,9 +229,10 @@ class AIRentDSCRCalculator:
         Calculate estimated rent and DSCR for a property.
 
         Expenses calculated: Principal & Interest (P&I), Property Taxes, Insurance only.
+        Property taxes are calculated automatically using county millage rates.
 
         Args:
-            address: Property address
+            address: Property address (must include county/city and state)
             purchase_price: Purchase price in USD
             down_payment_amount: Down payment in USD (optional)
             down_payment_percent: Down payment as decimal (e.g., 0.20 for 20%)
@@ -240,7 +240,6 @@ class AIRentDSCRCalculator:
             term_years: Loan term in years
             interest_only: Whether loan is interest-only
             vacancy_rate: Vacancy rate as decimal (default 0.0)
-            property_tax_rate: Annual property tax rate as decimal (default 0.012 for 1.2%)
             insurance_monthly: Monthly insurance cost in USD (default 150)
             property_type: Type of property (SFR, condo, etc.)
             beds: Number of bedrooms
@@ -277,33 +276,34 @@ class AIRentDSCRCalculator:
         confidence_score = rent_estimates['confidence']
         assumptions = rent_estimates['assumptions']
 
-        # Step 3: Calculate property taxes
-        # Try SC automatic calculation first
+        # Step 3: Calculate property taxes using county millage rates
+        # REQUIRED: County must be detected and millage rate must be found
         sc_county = self._detect_sc_county(address)
         sc_tax_calc = None
 
-        if sc_county:
-            # South Carolina property - use automatic tax calculation
-            sc_tax_calc = self._calculate_sc_property_tax(purchase_price, sc_county)
+        if not sc_county:
+            # Cannot detect county - return error
+            raise ValueError(
+                f"Cannot detect county from address: '{address}'. "
+                "Property taxes require county millage rates. "
+                "Please provide a complete address with city/county and state (SC). "
+                "Example: 'Myrtle Beach, SC' or 'Charleston County, SC'"
+            )
 
-            if sc_tax_calc["tax_accuracy"] == "ok":
-                # Use SC calculated taxes
-                property_tax_annual = sc_tax_calc["annual_taxes"]
-                property_tax_monthly = sc_tax_calc["monthly_taxes"]
-                property_tax_rate = sc_tax_calc["annual_taxes"] / purchase_price  # Back-calculate rate for display
-            else:
-                # SC county detected but calculation failed - use manual/default
-                if property_tax_rate is None:
-                    property_tax_rate = 0.012  # Default 1.2% annually
-                property_tax_annual = purchase_price * property_tax_rate
-                property_tax_monthly = property_tax_annual / 12
-        else:
-            # Not SC or non-SC property - use manual tax rate
-            if property_tax_rate is None:
-                property_tax_rate = 0.012  # Default 1.2% annually (US average)
+        # Calculate taxes using SC millage rate
+        sc_tax_calc = self._calculate_sc_property_tax(purchase_price, sc_county)
 
-            property_tax_annual = purchase_price * property_tax_rate
-            property_tax_monthly = property_tax_annual / 12
+        if sc_tax_calc["tax_accuracy"] != "ok":
+            # Millage rate not found for this county
+            raise ValueError(
+                f"County '{sc_county}' detected but millage rate not found in database. "
+                "Please verify the address is in South Carolina and includes a valid county/city."
+            )
+
+        # Use SC calculated taxes
+        property_tax_annual = sc_tax_calc["annual_taxes"]
+        property_tax_monthly = sc_tax_calc["monthly_taxes"]
+        property_tax_rate = sc_tax_calc["annual_taxes"] / purchase_price  # Back-calculate rate for display
 
         # Step 4: Set insurance
         if insurance_monthly is None:

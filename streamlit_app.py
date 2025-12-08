@@ -82,7 +82,7 @@ with tab1:
     st.header("📍 Property Information")
     col1, col2 = st.columns(2)
     with col1:
-        address = st.text_input("Property Address *", placeholder="123 Main St, Austin, TX 78701")
+        address = st.text_input("Property Address *", placeholder="Myrtle Beach, SC or Charleston, SC", help="Address must include South Carolina city/county for automatic tax calculation")
     with col2:
         purchase_price = st.number_input("Purchase Price *", min_value=0, value=400000, step=10000)
 
@@ -117,26 +117,16 @@ with tab1:
 
     # Expense Assumptions
     st.header("📊 Expense Assumptions")
-    st.info("💡 **Expenses calculated: P&I (Principal & Interest), Property Taxes, and Insurance only**")
+    st.info("💡 **Expenses calculated: P&I (Principal & Interest), Property Taxes (automatic from county millage), and Insurance only**")
+    st.success("🏛️ **Property taxes are calculated automatically using official county millage rates.** No manual input needed!")
 
-    col1, col2 = st.columns(2)
-    with col1:
-        property_tax_rate = st.number_input(
-            "Property Tax Rate % (default 1.2%)",
-            min_value=0.0,
-            max_value=10.0,
-            value=1.2,
-            step=0.1,
-            help="Annual property tax rate. US average is ~1.2% but varies greatly by location."
-        )
-    with col2:
-        insurance_monthly = st.number_input(
-            "Insurance ($/month, default $150)",
-            min_value=0,
-            value=150,
-            step=10,
-            help="Monthly homeowners insurance cost. Get actual quote for accuracy."
-        )
+    insurance_monthly = st.number_input(
+        "Insurance ($/month, default $150)",
+        min_value=0,
+        value=150,
+        step=10,
+        help="Monthly homeowners insurance cost. Get actual quote for accuracy."
+    )
 
     st.warning("⚠️ Note: This calculator does NOT include maintenance, property management, HOA, utilities, or other operating expenses. Actual cashflow will be lower.")
 
@@ -152,7 +142,6 @@ with tab1:
                 'interest_rate_annual': interest_rate_annual / 100,
                 'term_years': term_years,
                 'interest_only': interest_only,
-                'property_tax_rate': property_tax_rate / 100,
                 'insurance_monthly': insurance_monthly
             }
 
@@ -309,10 +298,10 @@ with st.sidebar:
     **Expenses Calculated:**
     - **P** = Principal (part of loan payment)
     - **I** = Interest (part of loan payment)
-    - **T** = Property Taxes (default 1.2% annually)
+    - **T** = Property Taxes (automatic from county millage rates)
     - **I** = Insurance (default $150/month)
 
-    **Note:** Does NOT include maintenance, HOA, property management, or other operating expenses.
+    **Note:** Property taxes are calculated automatically using official county millage rates. Does NOT include maintenance, HOA, property management, or other operating expenses.
     """)
 
     st.divider()
