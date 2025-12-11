@@ -106,7 +106,7 @@ col1, col2 = st.columns(2)
 with col1:
     address = st.text_input(
         "Property Address",
-        placeholder="Myrtle Beach, SC",
+        placeholder="123 Ocean Blvd, Myrtle Beach, SC 29577",
         help="Address must include South Carolina city/county for automatic tax calculation",
         label_visibility="visible"
     )
@@ -334,14 +334,12 @@ if st.session_state.result:
             value=f"{result['DSCR']:.2f}"
         )
         risk = result['risk_label']
-        if risk == "Golden":
-            st.success(f"🏆 {risk}")
-        elif risk == "Excellent":
+        if risk == "Excellent":
             st.success(f"✓ {risk}")
         elif risk == "Good":
-            st.info(f"✓ {risk}")
-        else:  # Bad
-            st.error(f"✗ {risk}")
+            st.success(f"✓ {risk}")
+        else:  # Borderline
+            st.warning(f"⚠ {risk}")
 
     with col2:
         st.metric(
