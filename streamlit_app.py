@@ -84,9 +84,17 @@ calculator = AIRentDSCRCalculator()
 if 'result' not in st.session_state:
     st.session_state.result = None
 
-# Header
-st.title("DSCR Calculator")
-st.caption("Analyze investment property performance in seconds")
+# Header with Logo
+col1, col2 = st.columns([1, 3])
+with col1:
+    # Logo will be displayed if bwm_logo.png exists in images/ folder
+    try:
+        st.image("images/bwm_logo.png", width=120)
+    except:
+        st.markdown("**BWM**")  # Fallback if logo not found
+with col2:
+    st.title("DSCR Calculator")
+    st.caption("Powered by BrickWood Mortgage")
 
 st.divider()
 
@@ -326,11 +334,13 @@ if st.session_state.result:
             value=f"{result['DSCR']:.2f}"
         )
         risk = result['risk_label']
-        if risk == "Strong":
+        if risk == "Golden":
+            st.success(f"🏆 {risk}")
+        elif risk == "Excellent":
             st.success(f"✓ {risk}")
-        elif risk == "Borderline":
-            st.warning(f"⚠ {risk}")
-        else:
+        elif risk == "Good":
+            st.info(f"✓ {risk}")
+        else:  # Bad
             st.error(f"✗ {risk}")
 
     with col2:
@@ -366,6 +376,24 @@ if st.session_state.result:
         f"At your inputs, this property shows a DSCR of {result['DSCR']:.2f} and approximately "
         f"${abs(result['monthly_cashflow']):,.0f}/month "
         f"{'positive' if result['monthly_cashflow'] >= 0 else 'negative'} cashflow."
+    )
+
+    # PHONE BUTTON
+    st.markdown(
+        '<div style="text-align: center; margin: 2rem 0;">'
+        '<a href="tel:8433144104" style="'
+        'display: inline-block; '
+        'background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); '
+        'color: white; '
+        'padding: 1rem 2rem; '
+        'border-radius: 8px; '
+        'text-decoration: none; '
+        'font-weight: 600; '
+        'font-size: 1.1rem;">'
+        '📞 Click here to see real lender terms for this scenario'
+        '</a>'
+        '</div>',
+        unsafe_allow_html=True
     )
 
     # SC TAX DETAILS (Optional expander)
