@@ -619,12 +619,14 @@ class AIRentDSCRCalculator:
 
     def _get_risk_label(self, DSCR: float) -> str:
         """Determine risk label based on DSCR."""
-        if DSCR >= 1.30:
-            return "Strong"
-        elif DSCR >= 1.10:
-            return "Borderline"
+        if DSCR >= 1.50:
+            return "Golden"
+        elif DSCR >= 1.25:
+            return "Excellent"
+        elif DSCR >= 1.0:
+            return "Good"
         else:
-            return "Weak"
+            return "Bad"
 
     def _generate_inputs_summary(
         self,
