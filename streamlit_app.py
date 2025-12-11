@@ -185,8 +185,33 @@ with st.expander("📝 Optional inputs (improve accuracy)"):
 
 st.divider()
 
+# INSURANCE SECTION
+st.markdown("### Insurance")
+
+insurance_mode = st.radio(
+    "",
+    ["Default ($150/month)", "Custom Amount"],
+    horizontal=True,
+    label_visibility="collapsed",
+    key="insurance_toggle"
+)
+
+if insurance_mode == "Custom Amount":
+    insurance_monthly = st.number_input(
+        "Monthly Insurance",
+        min_value=0,
+        value=150,
+        step=10
+    )
+    st.caption("Enter your custom insurance amount")
+else:
+    insurance_monthly = 150
+    st.caption("Default: $150/month")
+
+st.divider()
+
 # RENT SECTION
-st.markdown("### Rent Estimate")
+st.markdown("### Rent Estimate *")
 
 rent_mode = st.radio(
     "",
@@ -217,7 +242,7 @@ else:
 st.divider()
 
 # TAXES SECTION
-st.markdown("### Property Taxes")
+st.markdown("### Property Taxes *")
 
 tax_mode = st.radio(
     "",
@@ -265,7 +290,7 @@ if calculate_clicked:
                 'down_payment_percent': down_payment_percent / 100,
                 'interest_rate_annual': interest_rate / 100,
                 'term_years': term_years,
-                'insurance_monthly': 150  # Default
+                'insurance_monthly': insurance_monthly
             }
 
             # Optional parameters
@@ -292,8 +317,8 @@ if st.session_state.result:
 
     st.markdown("---")
 
-    # THREE RESULT CARDS
-    col1, col2, col3 = st.columns(3)
+    # FOUR RESULT CARDS
+    col1, col2, col3, col4 = st.columns(4)
 
     with col1:
         st.metric(
@@ -309,6 +334,13 @@ if st.session_state.result:
             st.error(f"✗ {risk}")
 
     with col2:
+        st.metric(
+            label="Est. Monthly Rent",
+            value=f"${result['estimated_monthly_rent']:,.0f}"
+        )
+        st.caption(f"Range: ${result['low_estimate_rent']:,.0f}-${result['high_estimate_rent']:,.0f}")
+
+    with col3:
         cashflow = result['monthly_cashflow']
         st.metric(
             label="Monthly Cashflow",
@@ -317,7 +349,7 @@ if st.session_state.result:
         )
         st.caption("After mortgage, taxes, insurance, and HOA")
 
-    with col3:
+    with col4:
         st.metric(
             label="Annual Taxes",
             value=f"${result['property_tax_annual']:,.0f}"
@@ -349,3 +381,15 @@ if st.session_state.result:
                 st.write(f"**Taxable Value:** ${sc_tax['taxable_value']:,.2f}")
                 st.write(f"**Monthly Taxes:** ${sc_tax['monthly_taxes']:,.2f}")
                 st.write(f"**Annual Taxes:** ${sc_tax['annual_taxes']:,.2f}")
+
+# DISCLAIMER (always visible at bottom)
+st.markdown("---")
+st.markdown(
+    '<p style="color: #9ca3af; font-size: 0.75rem; text-align: center; line-height: 1.4;">'
+    '<strong>Disclaimer:</strong> All calculations and figures shown on this site are estimates only and are provided for informational purposes. '
+    'DSCR, rent projections, tax amounts, and cashflow outputs may vary by lender, property type, county assessment data, and actual underwriting guidelines. '
+    'Nothing on this page constitutes a loan approval, financial advice, or a binding offer of credit. '
+    'Please verify all numbers with a licensed mortgage professional.'
+    '</p>',
+    unsafe_allow_html=True
+)
