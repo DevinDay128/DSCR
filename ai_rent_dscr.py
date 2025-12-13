@@ -492,37 +492,58 @@ class AIRentDSCRCalculator:
         condition: Optional[str]
     ) -> Dict[str, Any]:
         """
-        Estimate monthly market rent for the property using yield-based formula.
+        Estimate monthly market rent prioritizing square footage and neighborhood.
 
         Formula:
-        1. Price-based: Rent_price = PurchasePrice × 0.0085 (0.85% monthly yield)
-        2. SqFt-based: Rent_sqft = SqFt × $1.40/sqft (if available)
-        3. BaseRent = average of both, or just price-based if no sqft
-        4. Apply adjustment factor (0.85 to 1.15) based on property characteristics
+        1. Primary: SqFt × $/sqft (adjusted for neighborhood/location)
+        2. Secondary: Price-based validation (0.85% yield)
+        3. BaseRent = SqFt-based with neighborhood premium applied
+        4. Apply adjustment factor for property characteristics
         5. Range = ±10% of estimated rent
         """
 
         assumptions_list = []
-        confidence = 0.70  # Start with good confidence for formula-based approach
+        confidence = 0.75  # Higher confidence with sqft + location data
 
         # Constants
-        YIELD_LOCAL = 0.0085  # 0.85% monthly yield
-        RENT_PER_SQFT_LOCAL = 1.40  # $1.40 per square foot
+        RENT_PER_SQFT_BASE = 1.40  # Base SC rental rate per sqft
 
-        # Step 1: Price-based estimate
-        rent_price = purchase_price * YIELD_LOCAL
-        assumptions_list.append(f"Price-based estimate: ${rent_price:,.0f} (0.85% monthly yield)")
+        # Step 1: Neighborhood-adjusted rent per sqft
+        rent_per_sqft = RENT_PER_SQFT_BASE
+        address_upper = address.upper()
 
-        # Step 2: SqFt-based estimate (if available)
-        if sqft is not None and sqft > 0:
-            rent_sqft = sqft * RENT_PER_SQFT_LOCAL
-            base_rent = (rent_price + rent_sqft) / 2
-            assumptions_list.append(f"SqFt-based estimate: ${rent_sqft:,.0f} ({sqft} sqft × ${RENT_PER_SQFT_LOCAL}/sqft)")
-            assumptions_list.append(f"Base rent: ${base_rent:,.0f} (average of both methods)")
+        # SC Neighborhood adjustments (most important factor)
+        if any(area in address_upper for area in ['MYRTLE BEACH', 'NORTH MYRTLE', 'SURFSIDE']):
+            rent_per_sqft = 1.65  # Premium coastal tourist market
+            assumptions_list.append("Myrtle Beach area: $1.65/sqft")
+        elif any(area in address_upper for area in ['HILTON HEAD', 'KIAWAH', 'ISLE OF PALMS']):
+            rent_per_sqft = 1.75  # Luxury coastal market
+            assumptions_list.append("Luxury coastal: $1.75/sqft")
+        elif any(area in address_upper for area in ['CHARLESTON', 'MOUNT PLEASANT', 'DANIEL ISLAND']):
+            rent_per_sqft = 1.55  # Charleston metro premium
+            assumptions_list.append("Charleston metro: $1.55/sqft")
+        elif any(area in address_upper for area in ['COLUMBIA', 'LEXINGTON', 'IRMO']):
+            rent_per_sqft = 1.35  # Columbia metro
+            assumptions_list.append("Columbia metro: $1.35/sqft")
+        elif any(area in address_upper for area in ['GREENVILLE', 'SPARTANBURG', 'ANDERSON']):
+            rent_per_sqft = 1.30  # Upstate metros
+            assumptions_list.append("Upstate metro: $1.30/sqft")
         else:
-            base_rent = rent_price
-            assumptions_list.append("Square footage not provided - using price-based estimate only")
-            confidence *= 0.95
+            assumptions_list.append(f"Base SC rate: ${RENT_PER_SQFT_BASE}/sqft")
+
+        # Step 2: Calculate base rent (SqFt-based is primary)
+        if sqft is not None and sqft > 0:
+            base_rent = sqft * rent_per_sqft
+            assumptions_list.append(f"Primary estimate: ${base_rent:,.0f} ({sqft} sqft × ${rent_per_sqft}/sqft)")
+
+            # Price-based as secondary validation
+            rent_price = purchase_price * 0.0085
+            assumptions_list.append(f"Price check: ${rent_price:,.0f} (0.85% yield validation)")
+        else:
+            # Fallback if no sqft
+            base_rent = purchase_price * 0.0085
+            assumptions_list.append("No sqft provided - using price-based")
+            confidence *= 0.60
 
         # Step 3: Calculate adjustment factor (bounded to ±15%)
         adjustment_factor = 1.0  # Start at neutral
@@ -559,15 +580,6 @@ class AIRentDSCRCalculator:
         else:
             assumptions_list.append("Condition not specified - assuming average")
             confidence *= 0.95
-
-        # Adjust for location (high-cost metros)
-        address_upper = address.upper()
-        high_cost_cities = ['SAN FRANCISCO', 'NEW YORK', 'BOSTON', 'SEATTLE', 'LOS ANGELES',
-                           'SAN JOSE', 'WASHINGTON DC', 'OAKLAND', 'MANHATTAN', 'MIAMI']
-        if any(city in address_upper for city in high_cost_cities):
-            adjustment_factor *= 1.05  # +5% for high-cost metros
-            adjustment_reasons.append("High-cost metro area (+5%)")
-            confidence *= 0.90  # Lower confidence due to variability
 
         # Adjust for bedrooms (if unusual size)
         if beds is not None:

@@ -11,7 +11,12 @@ st.set_page_config(
     page_title="DSCR Calculator",
     page_icon="🏠",
     layout="centered",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="collapsed",
+    menu_items={
+        'Get Help': None,
+        'Report a bug': None,
+        'About': None
+    }
 )
 
 # Minimal clean CSS
@@ -84,17 +89,15 @@ calculator = AIRentDSCRCalculator()
 if 'result' not in st.session_state:
     st.session_state.result = None
 
-# Header with Logo
-col1, col2 = st.columns([1, 3])
-with col1:
-    # Logo will be displayed if bwm_logo.png exists in images/ folder
-    try:
-        st.image("images/bwm_logo.png", width=120)
-    except:
-        st.markdown("**BWM**")  # Fallback if logo not found
-with col2:
-    st.title("DSCR Calculator")
-    st.caption("Powered by BrickWood Mortgage")
+# Logo at top left
+try:
+    st.image("images/bwm_logo.png", width=180)
+except:
+    st.markdown("**BrickWood Mortgage**")  # Fallback if logo not found
+
+# Header
+st.title("DSCR Calculator")
+st.caption("Powered by BrickWood Mortgage")
 
 st.divider()
 
@@ -128,6 +131,14 @@ with col1:
     )
 
 with col2:
+    sqft = st.number_input(
+        "Square Feet",
+        min_value=0,
+        value=1800,
+        step=100,
+        help="Required for accurate rent estimation"
+    )
+
     down_payment_percent = st.slider(
         "Down Payment (%)",
         min_value=0,
@@ -161,14 +172,6 @@ with st.expander("📝 Optional inputs (improve accuracy)"):
     col1, col2 = st.columns(2)
 
     with col1:
-        sqft = st.number_input(
-            "Square Feet (optional)",
-            min_value=0,
-            value=0,
-            step=100
-        )
-        st.caption("Helps estimate rent more accurately")
-
         beds = st.number_input(
             "Bedrooms (optional)",
             min_value=0,
@@ -177,7 +180,6 @@ with st.expander("📝 Optional inputs (improve accuracy)"):
         )
         st.caption("Optional — improves rent estimate")
 
-    with col2:
         baths = st.number_input(
             "Bathrooms (optional)",
             min_value=0.0,
@@ -186,6 +188,7 @@ with st.expander("📝 Optional inputs (improve accuracy)"):
         )
         st.caption("Optional — improves rent estimate")
 
+    with col2:
         property_type = st.selectbox(
             "Property Type (optional)",
             ["", "Single Family", "Condo", "Townhome", "Multi-Family"]
