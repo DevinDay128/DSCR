@@ -11,7 +11,12 @@ st.set_page_config(
     page_title="DSCR Calculator",
     page_icon="🏠",
     layout="centered",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="collapsed",
+    menu_items={
+        'Get Help': None,
+        'Report a bug': None,
+        'About': None
+    }
 )
 
 # Minimal clean CSS
@@ -84,17 +89,15 @@ calculator = AIRentDSCRCalculator()
 if 'result' not in st.session_state:
     st.session_state.result = None
 
-# Header with Logo
-col1, col2 = st.columns([1, 3])
-with col1:
-    # Logo will be displayed if bwm_logo.png exists in images/ folder
-    try:
-        st.image("images/bwm_logo.png", width=120)
-    except:
-        st.markdown("**BWM**")  # Fallback if logo not found
-with col2:
-    st.title("DSCR Calculator")
-    st.caption("Powered by BrickWood Mortgage")
+# Logo at top left
+try:
+    st.image("images/bwm_logo.png", width=180)
+except:
+    st.markdown("**BrickWood Mortgage**")  # Fallback if logo not found
+
+# Header
+st.title("DSCR Calculator")
+st.caption("Powered by BrickWood Mortgage")
 
 st.divider()
 
@@ -128,6 +131,14 @@ with col1:
     )
 
 with col2:
+    sqft = st.number_input(
+        "Square Feet",
+        min_value=0,
+        value=1800,
+        step=100,
+        help="Required for accurate rent estimation"
+    )
+
     down_payment_percent = st.slider(
         "Down Payment (%)",
         min_value=0,
@@ -161,14 +172,6 @@ with st.expander("📝 Optional inputs (improve accuracy)"):
     col1, col2 = st.columns(2)
 
     with col1:
-        sqft = st.number_input(
-            "Square Feet (optional)",
-            min_value=0,
-            value=0,
-            step=100
-        )
-        st.caption("Helps estimate rent more accurately")
-
         beds = st.number_input(
             "Bedrooms (optional)",
             min_value=0,
@@ -177,7 +180,6 @@ with st.expander("📝 Optional inputs (improve accuracy)"):
         )
         st.caption("Optional — improves rent estimate")
 
-    with col2:
         baths = st.number_input(
             "Bathrooms (optional)",
             min_value=0.0,
@@ -186,6 +188,7 @@ with st.expander("📝 Optional inputs (improve accuracy)"):
         )
         st.caption("Optional — improves rent estimate")
 
+    with col2:
         property_type = st.selectbox(
             "Property Type (optional)",
             ["", "Single Family", "Condo", "Townhome", "Multi-Family"]
@@ -393,6 +396,129 @@ if st.session_state.result:
         '</div>',
         unsafe_allow_html=True
     )
+
+    # NOI CALCULATOR (Toggle)
+    st.markdown("---")
+    noi_toggle = st.checkbox("📊 Calculate additional investment metrics", value=False)
+
+    if noi_toggle:
+        st.markdown("### Investment Metrics Settings")
+        st.caption("Adjust assumptions to calculate Net Operating Income (NOI)")
+
+        # Input columns
+        col1, col2 = st.columns(2)
+
+        with col1:
+            vacancy_rate = st.number_input(
+                "Vacancy Rate (%)",
+                min_value=0.0,
+                max_value=100.0,
+                value=5.0,
+                step=0.5,
+                help="Expected vacancy rate as percentage"
+            )
+
+            maintenance_rate = st.number_input(
+                "Maintenance Reserve (%)",
+                min_value=0.0,
+                max_value=100.0,
+                value=10.0,
+                step=0.5,
+                help="Annual maintenance reserve as percentage of rent"
+            )
+
+        with col2:
+            utilities_mode = st.radio(
+                "Who pays utilities?",
+                ["Tenant pays utilities", "Owner pays utilities"],
+                horizontal=False,
+                key="utilities_toggle"
+            )
+
+            if utilities_mode == "Owner pays utilities":
+                manual_utilities = st.number_input(
+                    "Monthly Utilities (optional)",
+                    min_value=0.0,
+                    value=0.0,
+                    step=10.0,
+                    help="Leave at 0 to use automatic estimate"
+                )
+            else:
+                manual_utilities = 0.0
+
+        # Calculate extended NOI
+        noi_result = calculator.calculate_extended_noi(
+            monthly_rent=result['estimated_monthly_rent'],
+            monthly_taxes=result['property_tax_monthly'],
+            monthly_insurance=result['insurance_monthly'],
+            monthly_hoa=hoa_monthly,
+            sqft=int(sqft) if sqft > 0 else None,
+            vacancy_rate=vacancy_rate / 100,
+            maintenance_rate=maintenance_rate / 100,
+            tenant_pays_utilities=(utilities_mode == "Tenant pays utilities"),
+            manual_utilities_monthly=manual_utilities
+        )
+
+        # Display NOI Results
+        st.markdown("---")
+        st.markdown("### 📈 Net Operating Income (NOI)")
+
+        # Key Metrics in columns
+        col1, col2, col3, col4 = st.columns(4)
+
+        with col1:
+            st.metric(
+                label="Monthly NOI",
+                value=f"${noi_result['noi_monthly']:,.0f}"
+            )
+
+        with col2:
+            st.metric(
+                label="Annual NOI",
+                value=f"${noi_result['noi_annual']:,.0f}"
+            )
+
+        with col3:
+            st.metric(
+                label="Effective Gross Income",
+                value=f"${noi_result['effective_gross_income_monthly']:,.0f}/mo"
+            )
+
+        with col4:
+            st.metric(
+                label="Operating Expenses",
+                value=f"${noi_result['operating_expenses_monthly']:,.0f}/mo"
+            )
+
+        # Detailed Breakdown
+        st.markdown("---")
+        st.markdown("#### 📋 Operating Expense Breakdown")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.write("**Monthly Operating Expenses:**")
+            st.write(f"• Property Taxes: ${noi_result['monthly_taxes']:,.0f}")
+            st.write(f"• Insurance: ${noi_result['monthly_insurance']:,.0f}")
+            st.write(f"• HOA Fees: ${noi_result['monthly_hoa']:,.0f}")
+            st.write(f"• Maintenance Reserve ({maintenance_rate:.1f}%): ${noi_result['maintenance_monthly']:,.0f}")
+            st.write(f"• Utilities: ${noi_result['utilities_monthly']:,.0f}")
+            st.write(f"**Total: ${noi_result['operating_expenses_monthly']:,.0f}**")
+
+        with col2:
+            st.write("**Assumptions Used:**")
+            st.write(f"• Monthly Rent: ${noi_result['monthly_rent']:,.0f}")
+            st.write(f"• Vacancy Rate: {noi_result['vacancy_rate']*100:.1f}%")
+            st.write(f"• Maintenance Reserve: {noi_result['maintenance_rate']*100:.1f}%")
+            st.write(f"• {noi_result['utilities_note']}")
+            st.write(f"• Effective Gross Income: ${noi_result['effective_gross_income_monthly']:,.0f}/mo")
+
+        # Info box with NOI context
+        st.info(
+            f"💡 **What is NOI?** Net Operating Income (NOI) is the total income from the property minus all operating expenses. "
+            f"Your property generates **${noi_result['noi_monthly']:,.0f}/month** or **${noi_result['noi_annual']:,.0f}/year** "
+            f"in NOI before debt service (mortgage payments). This is a key metric for evaluating investment performance."
+        )
 
     # SC TAX DETAILS (Optional expander)
     if result.get('sc_tax_calculation', {}).get('tax_accuracy') == 'ok':

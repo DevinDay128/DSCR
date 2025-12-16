@@ -492,37 +492,58 @@ class AIRentDSCRCalculator:
         condition: Optional[str]
     ) -> Dict[str, Any]:
         """
-        Estimate monthly market rent for the property using yield-based formula.
+        Estimate monthly market rent prioritizing square footage and neighborhood.
 
         Formula:
-        1. Price-based: Rent_price = PurchasePrice × 0.0085 (0.85% monthly yield)
-        2. SqFt-based: Rent_sqft = SqFt × $1.40/sqft (if available)
-        3. BaseRent = average of both, or just price-based if no sqft
-        4. Apply adjustment factor (0.85 to 1.15) based on property characteristics
+        1. Primary: SqFt × $/sqft (adjusted for neighborhood/location)
+        2. Secondary: Price-based validation (0.85% yield)
+        3. BaseRent = SqFt-based with neighborhood premium applied
+        4. Apply adjustment factor for property characteristics
         5. Range = ±10% of estimated rent
         """
 
         assumptions_list = []
-        confidence = 0.70  # Start with good confidence for formula-based approach
+        confidence = 0.75  # Higher confidence with sqft + location data
 
         # Constants
-        YIELD_LOCAL = 0.0085  # 0.85% monthly yield
-        RENT_PER_SQFT_LOCAL = 1.40  # $1.40 per square foot
+        RENT_PER_SQFT_BASE = 1.40  # Base SC rental rate per sqft
 
-        # Step 1: Price-based estimate
-        rent_price = purchase_price * YIELD_LOCAL
-        assumptions_list.append(f"Price-based estimate: ${rent_price:,.0f} (0.85% monthly yield)")
+        # Step 1: Neighborhood-adjusted rent per sqft
+        rent_per_sqft = RENT_PER_SQFT_BASE
+        address_upper = address.upper()
 
-        # Step 2: SqFt-based estimate (if available)
-        if sqft is not None and sqft > 0:
-            rent_sqft = sqft * RENT_PER_SQFT_LOCAL
-            base_rent = (rent_price + rent_sqft) / 2
-            assumptions_list.append(f"SqFt-based estimate: ${rent_sqft:,.0f} ({sqft} sqft × ${RENT_PER_SQFT_LOCAL}/sqft)")
-            assumptions_list.append(f"Base rent: ${base_rent:,.0f} (average of both methods)")
+        # SC Neighborhood adjustments (most important factor)
+        if any(area in address_upper for area in ['MYRTLE BEACH', 'NORTH MYRTLE', 'SURFSIDE']):
+            rent_per_sqft = 1.65  # Premium coastal tourist market
+            assumptions_list.append("Myrtle Beach area: $1.65/sqft")
+        elif any(area in address_upper for area in ['HILTON HEAD', 'KIAWAH', 'ISLE OF PALMS']):
+            rent_per_sqft = 1.75  # Luxury coastal market
+            assumptions_list.append("Luxury coastal: $1.75/sqft")
+        elif any(area in address_upper for area in ['CHARLESTON', 'MOUNT PLEASANT', 'DANIEL ISLAND']):
+            rent_per_sqft = 1.55  # Charleston metro premium
+            assumptions_list.append("Charleston metro: $1.55/sqft")
+        elif any(area in address_upper for area in ['COLUMBIA', 'LEXINGTON', 'IRMO']):
+            rent_per_sqft = 1.35  # Columbia metro
+            assumptions_list.append("Columbia metro: $1.35/sqft")
+        elif any(area in address_upper for area in ['GREENVILLE', 'SPARTANBURG', 'ANDERSON']):
+            rent_per_sqft = 1.30  # Upstate metros
+            assumptions_list.append("Upstate metro: $1.30/sqft")
         else:
-            base_rent = rent_price
-            assumptions_list.append("Square footage not provided - using price-based estimate only")
-            confidence *= 0.95
+            assumptions_list.append(f"Base SC rate: ${RENT_PER_SQFT_BASE}/sqft")
+
+        # Step 2: Calculate base rent (SqFt-based is primary)
+        if sqft is not None and sqft > 0:
+            base_rent = sqft * rent_per_sqft
+            assumptions_list.append(f"Primary estimate: ${base_rent:,.0f} ({sqft} sqft × ${rent_per_sqft}/sqft)")
+
+            # Price-based as secondary validation
+            rent_price = purchase_price * 0.0085
+            assumptions_list.append(f"Price check: ${rent_price:,.0f} (0.85% yield validation)")
+        else:
+            # Fallback if no sqft
+            base_rent = purchase_price * 0.0085
+            assumptions_list.append("No sqft provided - using price-based")
+            confidence *= 0.60
 
         # Step 3: Calculate adjustment factor (bounded to ±15%)
         adjustment_factor = 1.0  # Start at neutral
@@ -559,15 +580,6 @@ class AIRentDSCRCalculator:
         else:
             assumptions_list.append("Condition not specified - assuming average")
             confidence *= 0.95
-
-        # Adjust for location (high-cost metros)
-        address_upper = address.upper()
-        high_cost_cities = ['SAN FRANCISCO', 'NEW YORK', 'BOSTON', 'SEATTLE', 'LOS ANGELES',
-                           'SAN JOSE', 'WASHINGTON DC', 'OAKLAND', 'MANHATTAN', 'MIAMI']
-        if any(city in address_upper for city in high_cost_cities):
-            adjustment_factor *= 1.05  # +5% for high-cost metros
-            adjustment_reasons.append("High-cost metro area (+5%)")
-            confidence *= 0.90  # Lower confidence due to variability
 
         # Adjust for bedrooms (if unusual size)
         if beds is not None:
@@ -694,6 +706,110 @@ class AIRentDSCRCalculator:
         notes.append("This calculation includes only P&I, Taxes, and Insurance. Additional expenses (maintenance, HOA, property management, etc.) will reduce actual cashflow.")
 
         return " ".join(notes)
+
+    def calculate_extended_noi(
+        self,
+        monthly_rent: float,
+        monthly_taxes: float,
+        monthly_insurance: float,
+        monthly_hoa: float,
+        sqft: Optional[int] = None,
+        vacancy_rate: float = 0.05,
+        maintenance_rate: float = 0.10,
+        tenant_pays_utilities: bool = True,
+        manual_utilities_monthly: float = 0.0
+    ) -> Dict[str, Any]:
+        """
+        Calculate extended NOI with all operating expenses.
+
+        Uses the exact formulas specified:
+        1. Effective Gross Income = monthlyRent * (1 - vacancyRate)
+        2. Maintenance = monthlyRent * maintenanceRate
+        3. Operating Expenses = taxes + insurance + hoa + maintenance + utilities
+        4. NOI = Effective Gross Income - Operating Expenses
+
+        Utilities formula:
+        - If tenant pays: utilities = 0
+        - If owner pays:
+          - If manual > 0: use manual
+          - Else: estimated = sqft * 0.16, bounded [75, 350], default sqft=1500
+
+        Args:
+            monthly_rent: Monthly rental income
+            monthly_taxes: Monthly property taxes
+            monthly_insurance: Monthly insurance cost
+            monthly_hoa: Monthly HOA fees
+            sqft: Square footage (optional, default 1500 for utilities estimate)
+            vacancy_rate: Vacancy rate as decimal (default 0.05)
+            maintenance_rate: Maintenance rate as decimal (default 0.10)
+            tenant_pays_utilities: Whether tenant pays utilities (default True)
+            manual_utilities_monthly: Manual utilities amount if owner pays (default 0)
+
+        Returns:
+            Dictionary with NOI calculations and breakdown
+        """
+
+        # 1. Effective Gross Income
+        effective_gross_income_monthly = monthly_rent * (1 - vacancy_rate)
+
+        # 2. Maintenance
+        maintenance_monthly = monthly_rent * maintenance_rate
+
+        # 3. Utilities
+        if tenant_pays_utilities:
+            utilities_monthly = 0.0
+            utilities_note = "Tenant pays utilities"
+        else:
+            if manual_utilities_monthly > 0:
+                utilities_monthly = manual_utilities_monthly
+                utilities_note = f"Manual utilities: ${manual_utilities_monthly:,.0f}"
+            else:
+                # Use estimator
+                sqft_for_calc = sqft if sqft and sqft > 0 else 1500
+                estimated_utilities = sqft_for_calc * 0.16
+
+                # Bound to [75, 350]
+                if estimated_utilities < 75:
+                    estimated_utilities = 75
+                elif estimated_utilities > 350:
+                    estimated_utilities = 350
+
+                utilities_monthly = estimated_utilities
+                utilities_note = f"Estimated: {sqft_for_calc} sqft × $0.16 = ${estimated_utilities:,.0f}"
+
+        # 4. Operating Expenses
+        operating_expenses_monthly = (
+            monthly_taxes +
+            monthly_insurance +
+            monthly_hoa +
+            maintenance_monthly +
+            utilities_monthly
+        )
+
+        # 5. NOI
+        noi_monthly = effective_gross_income_monthly - operating_expenses_monthly
+        noi_annual = noi_monthly * 12
+
+        # Return detailed breakdown
+        return {
+            'effective_gross_income_monthly': round(effective_gross_income_monthly, 2),
+            'operating_expenses_monthly': round(operating_expenses_monthly, 2),
+            'noi_monthly': round(noi_monthly, 2),
+            'noi_annual': round(noi_annual, 2),
+
+            # Breakdown
+            'vacancy_rate': vacancy_rate,
+            'maintenance_rate': maintenance_rate,
+            'maintenance_monthly': round(maintenance_monthly, 2),
+            'utilities_monthly': round(utilities_monthly, 2),
+            'utilities_note': utilities_note,
+
+            # Components
+            'monthly_taxes': monthly_taxes,
+            'monthly_insurance': monthly_insurance,
+            'monthly_hoa': monthly_hoa,
+            'monthly_rent': monthly_rent
+        }
 
 
 def calculate_ai_rent_dscr(params: Dict[str, Any]) -> str:
