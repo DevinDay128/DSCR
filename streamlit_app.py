@@ -397,6 +397,129 @@ if st.session_state.result:
         unsafe_allow_html=True
     )
 
+    # NOI CALCULATOR (Toggle)
+    st.markdown("---")
+    noi_toggle = st.checkbox("📊 Calculate additional investment metrics", value=False)
+
+    if noi_toggle:
+        st.markdown("### Investment Metrics Settings")
+        st.caption("Adjust assumptions to calculate Net Operating Income (NOI)")
+
+        # Input columns
+        col1, col2 = st.columns(2)
+
+        with col1:
+            vacancy_rate = st.number_input(
+                "Vacancy Rate (%)",
+                min_value=0.0,
+                max_value=100.0,
+                value=5.0,
+                step=0.5,
+                help="Expected vacancy rate as percentage"
+            )
+
+            maintenance_rate = st.number_input(
+                "Maintenance Reserve (%)",
+                min_value=0.0,
+                max_value=100.0,
+                value=10.0,
+                step=0.5,
+                help="Annual maintenance reserve as percentage of rent"
+            )
+
+        with col2:
+            utilities_mode = st.radio(
+                "Who pays utilities?",
+                ["Tenant pays utilities", "Owner pays utilities"],
+                horizontal=False,
+                key="utilities_toggle"
+            )
+
+            if utilities_mode == "Owner pays utilities":
+                manual_utilities = st.number_input(
+                    "Monthly Utilities (optional)",
+                    min_value=0.0,
+                    value=0.0,
+                    step=10.0,
+                    help="Leave at 0 to use automatic estimate"
+                )
+            else:
+                manual_utilities = 0.0
+
+        # Calculate extended NOI
+        noi_result = calculator.calculate_extended_noi(
+            monthly_rent=result['estimated_monthly_rent'],
+            monthly_taxes=result['property_tax_monthly'],
+            monthly_insurance=result['insurance_monthly'],
+            monthly_hoa=hoa_monthly,
+            sqft=int(sqft) if sqft > 0 else None,
+            vacancy_rate=vacancy_rate / 100,
+            maintenance_rate=maintenance_rate / 100,
+            tenant_pays_utilities=(utilities_mode == "Tenant pays utilities"),
+            manual_utilities_monthly=manual_utilities
+        )
+
+        # Display NOI Results
+        st.markdown("---")
+        st.markdown("### 📈 Net Operating Income (NOI)")
+
+        # Key Metrics in columns
+        col1, col2, col3, col4 = st.columns(4)
+
+        with col1:
+            st.metric(
+                label="Monthly NOI",
+                value=f"${noi_result['noi_monthly']:,.0f}"
+            )
+
+        with col2:
+            st.metric(
+                label="Annual NOI",
+                value=f"${noi_result['noi_annual']:,.0f}"
+            )
+
+        with col3:
+            st.metric(
+                label="Effective Gross Income",
+                value=f"${noi_result['effective_gross_income_monthly']:,.0f}/mo"
+            )
+
+        with col4:
+            st.metric(
+                label="Operating Expenses",
+                value=f"${noi_result['operating_expenses_monthly']:,.0f}/mo"
+            )
+
+        # Detailed Breakdown
+        st.markdown("---")
+        st.markdown("#### 📋 Operating Expense Breakdown")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.write("**Monthly Operating Expenses:**")
+            st.write(f"• Property Taxes: ${noi_result['monthly_taxes']:,.0f}")
+            st.write(f"• Insurance: ${noi_result['monthly_insurance']:,.0f}")
+            st.write(f"• HOA Fees: ${noi_result['monthly_hoa']:,.0f}")
+            st.write(f"• Maintenance Reserve ({maintenance_rate:.1f}%): ${noi_result['maintenance_monthly']:,.0f}")
+            st.write(f"• Utilities: ${noi_result['utilities_monthly']:,.0f}")
+            st.write(f"**Total: ${noi_result['operating_expenses_monthly']:,.0f}**")
+
+        with col2:
+            st.write("**Assumptions Used:**")
+            st.write(f"• Monthly Rent: ${noi_result['monthly_rent']:,.0f}")
+            st.write(f"• Vacancy Rate: {noi_result['vacancy_rate']*100:.1f}%")
+            st.write(f"• Maintenance Reserve: {noi_result['maintenance_rate']*100:.1f}%")
+            st.write(f"• {noi_result['utilities_note']}")
+            st.write(f"• Effective Gross Income: ${noi_result['effective_gross_income_monthly']:,.0f}/mo")
+
+        # Info box with NOI context
+        st.info(
+            f"💡 **What is NOI?** Net Operating Income (NOI) is the total income from the property minus all operating expenses. "
+            f"Your property generates **${noi_result['noi_monthly']:,.0f}/month** or **${noi_result['noi_annual']:,.0f}/year** "
+            f"in NOI before debt service (mortgage payments). This is a key metric for evaluating investment performance."
+        )
+
     # SC TAX DETAILS (Optional expander)
     if result.get('sc_tax_calculation', {}).get('tax_accuracy') == 'ok':
         with st.expander("🏛️ South Carolina Tax Details"):

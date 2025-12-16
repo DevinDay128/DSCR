@@ -707,6 +707,110 @@ class AIRentDSCRCalculator:
 
         return " ".join(notes)
 
+    def calculate_extended_noi(
+        self,
+        monthly_rent: float,
+        monthly_taxes: float,
+        monthly_insurance: float,
+        monthly_hoa: float,
+        sqft: Optional[int] = None,
+        vacancy_rate: float = 0.05,
+        maintenance_rate: float = 0.10,
+        tenant_pays_utilities: bool = True,
+        manual_utilities_monthly: float = 0.0
+    ) -> Dict[str, Any]:
+        """
+        Calculate extended NOI with all operating expenses.
+
+        Uses the exact formulas specified:
+        1. Effective Gross Income = monthlyRent * (1 - vacancyRate)
+        2. Maintenance = monthlyRent * maintenanceRate
+        3. Operating Expenses = taxes + insurance + hoa + maintenance + utilities
+        4. NOI = Effective Gross Income - Operating Expenses
+
+        Utilities formula:
+        - If tenant pays: utilities = 0
+        - If owner pays:
+          - If manual > 0: use manual
+          - Else: estimated = sqft * 0.16, bounded [75, 350], default sqft=1500
+
+        Args:
+            monthly_rent: Monthly rental income
+            monthly_taxes: Monthly property taxes
+            monthly_insurance: Monthly insurance cost
+            monthly_hoa: Monthly HOA fees
+            sqft: Square footage (optional, default 1500 for utilities estimate)
+            vacancy_rate: Vacancy rate as decimal (default 0.05)
+            maintenance_rate: Maintenance rate as decimal (default 0.10)
+            tenant_pays_utilities: Whether tenant pays utilities (default True)
+            manual_utilities_monthly: Manual utilities amount if owner pays (default 0)
+
+        Returns:
+            Dictionary with NOI calculations and breakdown
+        """
+
+        # 1. Effective Gross Income
+        effective_gross_income_monthly = monthly_rent * (1 - vacancy_rate)
+
+        # 2. Maintenance
+        maintenance_monthly = monthly_rent * maintenance_rate
+
+        # 3. Utilities
+        if tenant_pays_utilities:
+            utilities_monthly = 0.0
+            utilities_note = "Tenant pays utilities"
+        else:
+            if manual_utilities_monthly > 0:
+                utilities_monthly = manual_utilities_monthly
+                utilities_note = f"Manual utilities: ${manual_utilities_monthly:,.0f}"
+            else:
+                # Use estimator
+                sqft_for_calc = sqft if sqft and sqft > 0 else 1500
+                estimated_utilities = sqft_for_calc * 0.16
+
+                # Bound to [75, 350]
+                if estimated_utilities < 75:
+                    estimated_utilities = 75
+                elif estimated_utilities > 350:
+                    estimated_utilities = 350
+
+                utilities_monthly = estimated_utilities
+                utilities_note = f"Estimated: {sqft_for_calc} sqft × $0.16 = ${estimated_utilities:,.0f}"
+
+        # 4. Operating Expenses
+        operating_expenses_monthly = (
+            monthly_taxes +
+            monthly_insurance +
+            monthly_hoa +
+            maintenance_monthly +
+            utilities_monthly
+        )
+
+        # 5. NOI
+        noi_monthly = effective_gross_income_monthly - operating_expenses_monthly
+        noi_annual = noi_monthly * 12
+
+        # Return detailed breakdown
+        return {
+            'effective_gross_income_monthly': round(effective_gross_income_monthly, 2),
+            'operating_expenses_monthly': round(operating_expenses_monthly, 2),
+            'noi_monthly': round(noi_monthly, 2),
+            'noi_annual': round(noi_annual, 2),
+
+            # Breakdown
+            'vacancy_rate': vacancy_rate,
+            'maintenance_rate': maintenance_rate,
+            'maintenance_monthly': round(maintenance_monthly, 2),
+            'utilities_monthly': round(utilities_monthly, 2),
+            'utilities_note': utilities_note,
+
+            # Components
+            'monthly_taxes': monthly_taxes,
+            'monthly_insurance': monthly_insurance,
+            'monthly_hoa': monthly_hoa,
+            'monthly_rent': monthly_rent
+        }
+
 
 def calculate_ai_rent_dscr(params: Dict[str, Any]) -> str:
     """
