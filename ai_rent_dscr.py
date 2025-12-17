@@ -505,36 +505,62 @@ class AIRentDSCRCalculator:
         assumptions_list = []
         confidence = 0.75  # Higher confidence with sqft + location data
 
-        # Constants
-        RENT_PER_SQFT_BASE = 1.40  # Base SC rental rate per sqft
-
-        # Step 1: Neighborhood-adjusted rent per sqft
-        rent_per_sqft = RENT_PER_SQFT_BASE
+        # Step 1: Determine base $/sqft rate using TIERED SYSTEM
+        # Larger properties have lower $/sqft rates (reflects real market dynamics)
         address_upper = address.upper()
 
-        # SC Neighborhood adjustments (most important factor)
-        if any(area in address_upper for area in ['MYRTLE BEACH', 'NORTH MYRTLE', 'SURFSIDE']):
-            rent_per_sqft = 1.65  # Premium coastal tourist market
-            assumptions_list.append("Myrtle Beach area: $1.65/sqft")
-        elif any(area in address_upper for area in ['HILTON HEAD', 'KIAWAH', 'ISLE OF PALMS']):
-            rent_per_sqft = 1.75  # Luxury coastal market
-            assumptions_list.append("Luxury coastal: $1.75/sqft")
-        elif any(area in address_upper for area in ['CHARLESTON', 'MOUNT PLEASANT', 'DANIEL ISLAND']):
-            rent_per_sqft = 1.55  # Charleston metro premium
-            assumptions_list.append("Charleston metro: $1.55/sqft")
-        elif any(area in address_upper for area in ['COLUMBIA', 'LEXINGTON', 'IRMO']):
-            rent_per_sqft = 1.35  # Columbia metro
-            assumptions_list.append("Columbia metro: $1.35/sqft")
-        elif any(area in address_upper for area in ['GREENVILLE', 'SPARTANBURG', 'ANDERSON']):
-            rent_per_sqft = 1.30  # Upstate metros
-            assumptions_list.append("Upstate metro: $1.30/sqft")
-        else:
-            assumptions_list.append(f"Base SC rate: ${RENT_PER_SQFT_BASE}/sqft")
-
-        # Step 2: Calculate base rent (SqFt-based is primary)
         if sqft is not None and sqft > 0:
+            # Tiered base rates by property size
+            if sqft < 1000:
+                base_rate = 1.60  # Small properties (studios, 1-beds)
+                size_tier = "Small (<1000 sqft)"
+            elif sqft < 1500:
+                base_rate = 1.45  # Typical 2-bed
+                size_tier = "Medium (1000-1500 sqft)"
+            elif sqft < 2000:
+                base_rate = 1.35  # Typical 3-bed
+                size_tier = "Standard (1500-2000 sqft)"
+            elif sqft < 2500:
+                base_rate = 1.20  # Larger 4-bed
+                size_tier = "Large (2000-2500 sqft)"
+            else:
+                base_rate = 1.05  # Very large homes
+                size_tier = "Very Large (>2500 sqft)"
+
+            assumptions_list.append(f"Size tier: {size_tier} - Base ${base_rate}/sqft")
+
+            # Step 2: Apply neighborhood multiplier to base rate
+            neighborhood_multiplier = 1.0
+            neighborhood_name = "Base SC market"
+
+            # SC Neighborhood adjustments (multiplied against base rate)
+            if any(area in address_upper for area in ['MYRTLE BEACH', 'NORTH MYRTLE', 'SURFSIDE']):
+                neighborhood_multiplier = 1.18  # +18% for Myrtle Beach
+                neighborhood_name = "Myrtle Beach area"
+            elif any(area in address_upper for area in ['HILTON HEAD', 'KIAWAH', 'ISLE OF PALMS']):
+                neighborhood_multiplier = 1.25  # +25% for luxury coastal
+                neighborhood_name = "Luxury coastal"
+            elif any(area in address_upper for area in ['CHARLESTON', 'MOUNT PLEASANT', 'DANIEL ISLAND']):
+                neighborhood_multiplier = 1.11  # +11% for Charleston metro
+                neighborhood_name = "Charleston metro"
+            elif any(area in address_upper for area in ['COLUMBIA', 'LEXINGTON', 'IRMO']):
+                neighborhood_multiplier = 0.96  # -4% for Columbia
+                neighborhood_name = "Columbia metro"
+            elif any(area in address_upper for area in ['GREENVILLE', 'SPARTANBURG', 'ANDERSON']):
+                neighborhood_multiplier = 0.93  # -7% for Upstate
+                neighborhood_name = "Upstate metro"
+
+            # Final $/sqft rate = base rate × neighborhood multiplier
+            rent_per_sqft = base_rate * neighborhood_multiplier
+
+            if neighborhood_multiplier != 1.0:
+                assumptions_list.append(
+                    f"{neighborhood_name}: {neighborhood_multiplier:.0%} adjustment → ${rent_per_sqft:.2f}/sqft"
+                )
+
+            # Step 3: Calculate base rent
             base_rent = sqft * rent_per_sqft
-            assumptions_list.append(f"Primary estimate: ${base_rent:,.0f} ({sqft} sqft × ${rent_per_sqft}/sqft)")
+            assumptions_list.append(f"Primary estimate: ${base_rent:,.0f} ({sqft} sqft × ${rent_per_sqft:.2f}/sqft)")
 
             # Price-based as secondary validation
             rent_price = purchase_price * 0.0085
