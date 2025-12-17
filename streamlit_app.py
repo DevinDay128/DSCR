@@ -392,7 +392,7 @@ if st.session_state.result:
         'text-decoration: none; '
         'font-weight: 600; '
         'font-size: 1.1rem;">'
-        '📞 Click here to see real lender terms for this scenario'
+        '📞 Click here to get a quote from BrickWood Mortgage'
         '</a>'
         '</div>',
         unsafe_allow_html=True
@@ -400,9 +400,18 @@ if st.session_state.result:
 
     # NOI CALCULATOR (Toggle)
     st.markdown("---")
-    noi_toggle = st.checkbox("📊 Calculate additional investment metrics", value=False)
 
-    if noi_toggle:
+    # Make button more prominent
+    if 'show_noi' not in st.session_state:
+        st.session_state.show_noi = False
+
+    if st.button("📊 Calculate Additional Investment Metrics", type="primary", use_container_width=True):
+        st.session_state.show_noi = not st.session_state.show_noi
+
+    if st.session_state.show_noi:
+        # NOI Explanation
+        st.info("**What is NOI?** This metric analyzes the cashflow of a property itself as if it had no mortgage.")
+
         st.markdown("### Investment Metrics Settings")
         st.caption("Adjust assumptions to calculate Net Operating Income (NOI)")
 
@@ -465,7 +474,7 @@ if st.session_state.result:
         st.markdown("### 📈 Net Operating Income (NOI)")
 
         # Key Metrics in columns
-        col1, col2, col3, col4 = st.columns(4)
+        col1, col2, col3 = st.columns(3)
 
         with col1:
             st.metric(
@@ -480,12 +489,6 @@ if st.session_state.result:
             )
 
         with col3:
-            st.metric(
-                label="Effective Gross Income",
-                value=f"${noi_result['effective_gross_income_monthly']:,.0f}/mo"
-            )
-
-        with col4:
             st.metric(
                 label="Operating Expenses",
                 value=f"${noi_result['operating_expenses_monthly']:,.0f}/mo"
@@ -512,7 +515,6 @@ if st.session_state.result:
             st.write(f"• Vacancy Rate: {noi_result['vacancy_rate']*100:.1f}%")
             st.write(f"• Maintenance Reserve: {noi_result['maintenance_rate']*100:.1f}%")
             st.write(f"• {noi_result['utilities_note']}")
-            st.write(f"• Effective Gross Income: ${noi_result['effective_gross_income_monthly']:,.0f}/mo")
 
         # Info box with NOI context
         st.info(
