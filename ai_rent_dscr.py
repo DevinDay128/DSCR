@@ -219,6 +219,7 @@ class AIRentDSCRCalculator:
         interest_only: bool = False,
         vacancy_rate: float = 0.0,  # Per requirements: 0% vacancy
         insurance_monthly: Optional[float] = None,  # Monthly insurance cost
+        hoa_monthly: float = 0.0,  # Monthly HOA fees
         property_type: Optional[str] = None,
         beds: Optional[int] = None,
         baths: Optional[float] = None,
@@ -229,7 +230,7 @@ class AIRentDSCRCalculator:
         """
         Calculate estimated rent and DSCR for a property.
 
-        Expenses calculated: Principal & Interest (P&I), Property Taxes, Insurance only.
+        Expenses calculated: Principal & Interest (P&I), Property Taxes, Insurance, and HOA.
         Property taxes are calculated automatically using county millage rates.
 
         Args:
@@ -242,6 +243,7 @@ class AIRentDSCRCalculator:
             interest_only: Whether loan is interest-only
             vacancy_rate: Vacancy rate as decimal (default 0.0)
             insurance_monthly: Monthly insurance cost in USD (default 150)
+            hoa_monthly: Monthly HOA fees in USD (default 0.0)
             property_type: Type of property (SFR, condo, etc.)
             beds: Number of bedrooms
             baths: Number of bathrooms
@@ -313,9 +315,9 @@ class AIRentDSCRCalculator:
         # Step 5: Calculate effective gross income (with vacancy)
         effective_gross_income_monthly = estimated_monthly_rent * (1 - vacancy_rate)
 
-        # Step 6: Calculate total monthly expenses (Taxes + Insurance only)
+        # Step 6: Calculate total monthly expenses (Taxes + Insurance + HOA)
         # Note: P&I (debt service) is calculated separately and NOT included in operating expenses
-        monthly_operating_expenses = property_tax_monthly + insurance_monthly
+        monthly_operating_expenses = property_tax_monthly + insurance_monthly + hoa_monthly
 
         # Step 7: Calculate NOI (Net Operating Income)
         # NOI = Income - Operating Expenses (does NOT subtract debt service)
@@ -402,6 +404,8 @@ class AIRentDSCRCalculator:
             "property_tax_annual": property_tax_annual,
             "insurance_monthly": insurance_monthly,
             "insurance_annual": insurance_monthly * 12,
+            "hoa_monthly": hoa_monthly,
+            "hoa_annual": hoa_monthly * 12,
 
             # SC tax calculation details (if applicable)
             "sc_tax_calculation": sc_tax_calc if sc_tax_calc else None,
