@@ -25,7 +25,8 @@
                 <div class="form-group">
                     <label for="address">Property Address *</label>
                     <input type="text" id="address" name="address" required
-                           placeholder="123 Main St, Austin, TX 78701">
+                           placeholder="Myrtle Beach, SC or Charleston, SC"
+                           title="Address must include South Carolina city/county for automatic tax calculation">
                 </div>
                 <div class="form-group">
                     <label for="purchase_price">Purchase Price *</label>
@@ -135,20 +136,13 @@
             <!-- Expense Assumptions -->
             <section class="form-section">
                 <h2>📊 Expense Assumptions</h2>
-                <p class="section-note">💡 Expenses calculated: <strong>P&I (Principal & Interest), Property Taxes, and Insurance only</strong></p>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="property_tax_rate">Property Tax Rate % (default 1.2%)</label>
-                        <input type="number" id="property_tax_rate" name="property_tax_rate"
-                               placeholder="1.2" min="0" max="10" step="0.1">
-                        <small>Annual property tax rate. US average is ~1.2% but varies greatly by location.</small>
-                    </div>
-                    <div class="form-group">
-                        <label for="insurance_monthly">Insurance ($/month, default $150)</label>
-                        <input type="number" id="insurance_monthly" name="insurance_monthly"
-                               placeholder="150" min="0" step="10">
-                        <small>Monthly homeowners insurance cost. Get actual quote for accuracy.</small>
-                    </div>
+                <p class="section-note">💡 Expenses calculated: <strong>P&I (Principal & Interest), Property Taxes (automatic from county millage), and Insurance only</strong></p>
+                <p class="section-note" style="color: #059669; font-weight: 600;">🏛️ Property taxes are calculated automatically using official county millage rates. No manual input needed!</p>
+                <div class="form-group">
+                    <label for="insurance_monthly">Insurance ($/month, default $150)</label>
+                    <input type="number" id="insurance_monthly" name="insurance_monthly"
+                           placeholder="150" min="0" step="10">
+                    <small>Monthly homeowners insurance cost. Get actual quote for accuracy.</small>
                 </div>
                 <div class="warning-note">
                     ⚠️ Note: This calculator does NOT include maintenance, property management, HOA, utilities, or other operating expenses. Actual cashflow will be lower.
@@ -247,6 +241,34 @@
                     </table>
                 </div>
 
+                <!-- SC Tax Calculation Details (if applicable) -->
+                <div id="sc_tax_details" class="sc-tax-box" style="display: none;">
+                    <h4>🏛️ South Carolina Tax Calculation</h4>
+                    <p><strong>County:</strong> <span id="sc_county_name"></span></p>
+                    <p><strong>Method:</strong> Automatic calculation using SC millage rates</p>
+                    <table style="margin-top: 10px;">
+                        <tr>
+                            <td>Assessment Ratio (Rental):</td>
+                            <td class="text-right"><span id="sc_assessment_ratio"></span>%</td>
+                        </tr>
+                        <tr>
+                            <td>Millage Rate:</td>
+                            <td class="text-right"><span id="sc_millage_rate"></span></td>
+                        </tr>
+                        <tr>
+                            <td>Taxable Value:</td>
+                            <td class="text-right">$<span id="sc_taxable_value"></span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Annual Taxes:</strong></td>
+                            <td class="text-right"><strong>$<span id="sc_annual_taxes"></span></strong></td>
+                        </tr>
+                    </table>
+                    <p style="margin-top: 10px; font-size: 0.9em; color: #059669;">
+                        ✓ Taxes calculated automatically for South Carolina rental properties using official 2024 county millage rates.
+                    </p>
+                </div>
+
                 <div class="summary-box">
                     <h4>Summary</h4>
                     <p id="human_summary"></p>
@@ -305,8 +327,6 @@
                 baths: document.getElementById('baths').value,
                 sqft: document.getElementById('sqft').value,
                 condition: document.getElementById('condition').value,
-                mls_description: document.getElementById('mls_description').value,
-                property_tax_rate: document.getElementById('property_tax_rate').value,
                 insurance_monthly: document.getElementById('insurance_monthly').value
             };
 
@@ -373,6 +393,18 @@
             document.getElementById('noi_annual_result').textContent = formatNumber(result.NOI_annual);
             document.getElementById('annual_debt_result').textContent = formatNumber(result.annual_debt_service);
             document.getElementById('dscr_table').textContent = result.DSCR.toFixed(2);
+
+            // SC Tax Calculation Details (if applicable)
+            if (result.sc_tax_calculation && result.sc_tax_calculation.tax_accuracy === 'ok') {
+                document.getElementById('sc_tax_details').style.display = 'block';
+                document.getElementById('sc_county_name').textContent = result.sc_tax_calculation.county_name;
+                document.getElementById('sc_assessment_ratio').textContent = (result.sc_tax_calculation.assessment_ratio * 100).toFixed(1);
+                document.getElementById('sc_millage_rate').textContent = result.sc_tax_calculation.millage_rate.toFixed(3);
+                document.getElementById('sc_taxable_value').textContent = formatNumber(result.sc_tax_calculation.taxable_value);
+                document.getElementById('sc_annual_taxes').textContent = formatNumber(result.sc_tax_calculation.annual_taxes);
+            } else {
+                document.getElementById('sc_tax_details').style.display = 'none';
+            }
 
             document.getElementById('human_summary').textContent = result.human_summary;
             document.getElementById('assumptions').textContent = result.assumptions;

@@ -60,8 +60,6 @@ def calculate():
             params['mls_description'] = data['mls_description']
 
         # Expense assumptions
-        if data.get('property_tax_rate'):
-            params['property_tax_rate'] = float(data['property_tax_rate']) / 100
         if data.get('insurance_monthly'):
             params['insurance_monthly'] = float(data['insurance_monthly'])
 

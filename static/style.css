@@ -332,6 +332,39 @@ h1 {
     background: #fef2f2;
 }
 
+.sc-tax-box {
+    background: #ecfdf5;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    border-left: 4px solid #059669;
+}
+
+.sc-tax-box h4 {
+    color: #047857;
+    margin-bottom: 12px;
+    font-size: 1.1em;
+}
+
+.sc-tax-box p {
+    color: #065f46;
+    margin-bottom: 8px;
+}
+
+.sc-tax-box table {
+    width: 100%;
+    margin-top: 10px;
+}
+
+.sc-tax-box table tr {
+    border-bottom: 1px solid #d1fae5;
+}
+
+.sc-tax-box table td {
+    padding: 8px 4px;
+    color: #065f46;
+}
+
 .summary-box h4,
 .assumptions-box h4,
 .notes-box h4,

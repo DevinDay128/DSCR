@@ -1,9 +1,6 @@
 """
-Streamlit Web Application for AI Rent and DSCR Calculator
-
-This is a simpler alternative to the Flask app.
-
-Run with: streamlit run streamlit_app.py
+Streamlit DSCR Calculator - Clean Minimal UI
+Single-page design matching investor requirements
 """
 
 import streamlit as st
@@ -11,309 +8,541 @@ from ai_rent_dscr import AIRentDSCRCalculator
 
 # Page configuration
 st.set_page_config(
-    page_title="AI Rent & DSCR Calculator",
+    page_title="DSCR Calculator",
     page_icon="🏠",
-    layout="wide"
+    layout="centered",
+    initial_sidebar_state="collapsed",
+    menu_items={
+        'Get Help': None,
+        'Report a bug': None,
+        'About': None
+    }
 )
 
-# Custom CSS
+# Minimal clean CSS
 st.markdown("""
 <style>
-    .main-header {
-        font-size: 3em;
-        font-weight: bold;
-        color: #667eea;
-        text-align: center;
-        margin-bottom: 10px;
+    /* Main background */
+    .main {
+        background-color: #f8f9fa;
+        padding: 2rem 1rem;
     }
-    .subtitle {
-        text-align: center;
+
+    /* Remove extra padding */
+    .block-container {
+        padding-top: 3rem;
+        padding-bottom: 3rem;
+        max-width: 800px;
+    }
+
+    /* Clean headers */
+    h1 {
+        font-size: 2rem !important;
+        font-weight: 600 !important;
+        color: #1a1a1a !important;
+        margin-bottom: 0.5rem !important;
+    }
+
+    h3 {
+        font-size: 0.875rem !important;
+        font-weight: 600 !important;
+        color: #374151 !important;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-top: 2rem !important;
+    }
+
+    /* Clean buttons */
+    .stButton > button {
+        width: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-weight: 500;
+        border-radius: 8px;
+        padding: 0.75rem;
+        border: none;
+    }
+
+    /* Metrics */
+    div[data-testid="stMetricValue"] {
+        font-size: 2.5rem;
+        font-weight: 700;
+    }
+
+    /* Input fields */
+    .stNumberInput input, .stTextInput input {
+        border-radius: 8px;
+    }
+
+    /* Expander */
+    .streamlit-expanderHeader {
+        font-size: 0.875rem;
         color: #6b7280;
-        margin-bottom: 30px;
-    }
-    .metric-card {
-        background: #f9fafb;
-        padding: 20px;
-        border-radius: 10px;
-        border: 2px solid #e5e7eb;
-    }
-    .risk-strong {
-        background-color: #d1fae5;
-        color: #065f46;
-        padding: 10px;
-        border-radius: 10px;
-        text-align: center;
-        font-weight: bold;
-    }
-    .risk-borderline {
-        background-color: #fed7aa;
-        color: #92400e;
-        padding: 10px;
-        border-radius: 10px;
-        text-align: center;
-        font-weight: bold;
-    }
-    .risk-weak {
-        background-color: #fee2e2;
-        color: #991b1b;
-        padding: 10px;
-        border-radius: 10px;
-        text-align: center;
-        font-weight: bold;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Header
-st.markdown('<div class="main-header">🏠 AI Rent & DSCR Calculator</div>', unsafe_allow_html=True)
-st.markdown('<div class="subtitle">Estimate rental income and analyze investment property performance</div>', unsafe_allow_html=True)
-
-# Warning banner
-st.warning("⚠️ **Important:** This tool provides rough AI estimates for screening purposes only. Always verify with professional appraisals and local market research.")
-
 # Initialize calculator
 calculator = AIRentDSCRCalculator()
 
-# Create tabs for input and results
-tab1, tab2 = st.tabs(["📝 Input", "📊 Results"])
+# Session state
+if 'result' not in st.session_state:
+    st.session_state.result = None
 
-with tab1:
-    # Property Information
-    st.header("📍 Property Information")
-    col1, col2 = st.columns(2)
-    with col1:
-        address = st.text_input("Property Address *", placeholder="123 Main St, Austin, TX 78701")
-    with col2:
-        purchase_price = st.number_input("Purchase Price *", min_value=0, value=400000, step=10000)
+# Logo at top left
+try:
+    st.image("images/bwm_logo.png", width=180)
+except:
+    st.markdown("**BrickWood Mortgage**")  # Fallback if logo not found
 
-    # Property Details
-    st.header("🏡 Property Details (Optional)")
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        property_type = st.selectbox("Property Type", ["", "SFR", "Condo", "Townhouse", "Duplex", "Multi-family"])
-        beds = st.number_input("Bedrooms", min_value=0, value=3, step=1)
-    with col2:
-        baths = st.number_input("Bathrooms", min_value=0.0, value=2.0, step=0.5)
-        sqft = st.number_input("Square Feet", min_value=0, value=1800, step=100)
-    with col3:
-        condition = st.selectbox("Condition", ["", "Excellent", "Good", "Average", "Fair", "Poor", "Fixer"])
+# Header
+st.title("DSCR Calculator")
+st.caption("Powered by BrickWood Mortgage")
 
-    # MLS Description
-    mls_description = st.text_area(
-        "MLS Description",
-        placeholder="Enter MLS listing description here for enhanced rent estimation. Include details like: school district quality, nearby amenities (beach, downtown, employers), property features (pool, gym, garage, yard), etc.",
-        height=100,
-        help="Including MLS description enables fact-checking of features like school districts, coastal proximity, major employers, amenities, and more for more accurate rent estimates."
+st.divider()
+
+# REQUIRED INPUTS
+st.markdown("### Required Inputs")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    address = st.text_input(
+        "Property Address",
+        placeholder="123 Ocean Blvd, Myrtle Beach, SC 29577",
+        help="Address must include South Carolina city/county for automatic tax calculation",
+        label_visibility="visible"
     )
 
-    # Loan Terms
-    st.header("💰 Loan Terms")
+    purchase_price = st.number_input(
+        "Purchase Price",
+        min_value=0,
+        value=400000,
+        step=10000,
+        format="%d"
+    )
+
+    hoa_monthly = st.number_input(
+        "Monthly HOA",
+        min_value=0,
+        value=0,
+        step=50,
+        format="%d"
+    )
+
+with col2:
+    sqft = st.number_input(
+        "Square Feet",
+        min_value=0,
+        value=1800,
+        step=100,
+        help="Required for accurate rent estimation"
+    )
+
+    down_payment_percent = st.slider(
+        "Down Payment (%)",
+        min_value=0,
+        max_value=40,
+        value=20,
+        step=1
+    )
+    st.caption(f"{down_payment_percent}%")
+
+    interest_rate = st.number_input(
+        "Interest Rate (%)",
+        min_value=0.0,
+        max_value=20.0,
+        value=7.0,
+        step=0.1,
+        format="%.1f"
+    )
+
+    term_years = st.number_input(
+        "Loan Term (Years)",
+        min_value=1,
+        max_value=40,
+        value=30,
+        step=1
+    )
+
+st.divider()
+
+# OPTIONAL INPUTS (Collapsed)
+with st.expander("📝 Optional inputs (improve accuracy)"):
     col1, col2 = st.columns(2)
+
     with col1:
-        down_payment_type = st.radio("Down Payment Type", ["Percentage", "Dollar Amount"])
-        if down_payment_type == "Percentage":
-            down_payment_percent = st.number_input("Down Payment %", min_value=0.0, max_value=100.0, value=20.0, step=0.1)
-            down_payment_amount = None
-        else:
-            down_payment_amount = st.number_input("Down Payment $", min_value=0, value=80000, step=1000)
-            down_payment_percent = None
-
-    with col2:
-        interest_rate_annual = st.number_input("Interest Rate %", min_value=0.0, max_value=20.0, value=7.0, step=0.01)
-        term_years = st.number_input("Loan Term (years)", min_value=1, max_value=40, value=30, step=1)
-        interest_only = st.checkbox("Interest-Only Loan")
-
-    # Expense Assumptions
-    st.header("📊 Expense Assumptions")
-    st.info("💡 **Expenses calculated: P&I (Principal & Interest), Property Taxes, and Insurance only**")
-
-    col1, col2 = st.columns(2)
-    with col1:
-        property_tax_rate = st.number_input(
-            "Property Tax Rate % (default 1.2%)",
-            min_value=0.0,
-            max_value=10.0,
-            value=1.2,
-            step=0.1,
-            help="Annual property tax rate. US average is ~1.2% but varies greatly by location."
-        )
-    with col2:
-        insurance_monthly = st.number_input(
-            "Insurance ($/month, default $150)",
+        beds = st.number_input(
+            "Bedrooms (optional)",
             min_value=0,
-            value=150,
-            step=10,
-            help="Monthly homeowners insurance cost. Get actual quote for accuracy."
+            value=0,
+            step=1
+        )
+        st.caption("Optional — improves rent estimate")
+
+        baths = st.number_input(
+            "Bathrooms (optional)",
+            min_value=0.0,
+            value=0.0,
+            step=0.5
+        )
+        st.caption("Optional — improves rent estimate")
+
+    with col2:
+        property_type = st.selectbox(
+            "Property Type (optional)",
+            ["", "Single Family", "Condo", "Townhome", "Multi-Family"]
         )
 
-    st.warning("⚠️ Note: This calculator does NOT include maintenance, property management, HOA, utilities, or other operating expenses. Actual cashflow will be lower.")
+st.divider()
 
-    # Calculate button
-    if st.button("🔍 Calculate DSCR", type="primary", use_container_width=True):
-        if not address:
-            st.error("Please enter a property address")
-        else:
+# INSURANCE SECTION
+st.markdown("### Insurance")
+
+insurance_mode = st.radio(
+    "",
+    ["Default ($150/month)", "Custom Amount"],
+    horizontal=True,
+    label_visibility="collapsed",
+    key="insurance_toggle"
+)
+
+if insurance_mode == "Custom Amount":
+    insurance_monthly = st.number_input(
+        "Monthly Insurance",
+        min_value=0,
+        value=150,
+        step=10
+    )
+    st.caption("Enter your custom insurance amount")
+else:
+    insurance_monthly = 150
+    st.caption("Default: $150/month")
+
+st.divider()
+
+# RENT SECTION
+st.markdown("### Rent Estimate *")
+
+rent_mode = st.radio(
+    "",
+    ["Auto Estimate", "Manual Rent"],
+    horizontal=True,
+    label_visibility="collapsed"
+)
+
+if rent_mode == "Manual Rent":
+    manual_rent = st.number_input(
+        "Monthly Rent",
+        min_value=0,
+        value=3000,
+        step=50
+    )
+    st.caption("You're overriding the automatic estimate")
+else:
+    manual_rent = None
+    if st.session_state.result:
+        est_rent = st.session_state.result.get('estimated_monthly_rent', 0)
+        st.number_input(
+            "Estimated Rent",
+            value=float(est_rent),
+            disabled=True
+        )
+    st.caption("Automatically estimated. Toggle to enter your own rent")
+
+st.divider()
+
+# TAXES SECTION
+st.markdown("### Property Taxes *")
+
+tax_mode = st.radio(
+    "",
+    ["Auto Estimate", "Manual"],
+    horizontal=True,
+    label_visibility="collapsed",
+    key="tax_toggle"
+)
+
+if tax_mode == "Manual":
+    manual_taxes = st.number_input(
+        "Annual Taxes",
+        min_value=0,
+        value=5000,
+        step=100
+    )
+    if st.session_state.result:
+        suggested = st.session_state.result.get('property_tax_annual', 0)
+        st.caption(f"Suggested: ${suggested:,.0f}")
+else:
+    manual_taxes = None
+    if st.session_state.result:
+        auto_tax = st.session_state.result.get('property_tax_annual', 0)
+        st.number_input(
+            "Annual Taxes",
+            value=float(auto_tax),
+            disabled=True
+        )
+    st.caption("Calculated automatically from county data")
+
+st.divider()
+
+# CALCULATE BUTTON
+calculate_clicked = st.button("Calculate DSCR", type="primary", use_container_width=True)
+
+if calculate_clicked:
+    if not address:
+        st.error("Please enter a property address")
+    else:
+        try:
             # Build parameters
             params = {
                 'address': address,
                 'purchase_price': purchase_price,
-                'interest_rate_annual': interest_rate_annual / 100,
+                'down_payment_percent': down_payment_percent / 100,
+                'interest_rate_annual': interest_rate / 100,
                 'term_years': term_years,
-                'interest_only': interest_only,
-                'property_tax_rate': property_tax_rate / 100,
-                'insurance_monthly': insurance_monthly
+                'insurance_monthly': insurance_monthly,
+                'hoa_monthly': hoa_monthly
             }
 
-            if down_payment_percent is not None:
-                params['down_payment_percent'] = down_payment_percent / 100
-            if down_payment_amount is not None:
-                params['down_payment_amount'] = down_payment_amount
+            # Optional parameters
+            if sqft > 0:
+                params['sqft'] = int(sqft)
+            if beds > 0:
+                params['beds'] = int(beds)
+            if baths > 0:
+                params['baths'] = float(baths)
             if property_type:
                 params['property_type'] = property_type
-            if beds > 0:
-                params['beds'] = beds
-            if baths > 0:
-                params['baths'] = baths
-            if sqft > 0:
-                params['sqft'] = sqft
-            if condition:
-                params['condition'] = condition
-            if mls_description:
-                params['mls_description'] = mls_description
 
             # Calculate
-            try:
+            with st.spinner("Calculating..."):
                 result = calculator.calculate(**params)
                 st.session_state.result = result
-                st.success("✅ Calculation complete! Check the Results tab.")
-            except Exception as e:
-                st.error(f"Error: {str(e)}")
 
-# Results Tab
-with tab2:
-    if 'result' in st.session_state:
-        result = st.session_state.result
+        except Exception as e:
+            st.error(f"Error: {str(e)}")
 
-        # Header with address and risk badge
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            st.title(f"🏠 {result['address']}")
-        with col2:
-            risk_class = f"risk-{result['risk_label'].lower()}"
-            st.markdown(f'<div class="{risk_class}">{result["risk_label"].upper()}</div>', unsafe_allow_html=True)
+# RESULTS
+if st.session_state.result:
+    result = st.session_state.result
 
-        st.divider()
+    st.markdown("---")
 
-        # Key Metrics
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.metric(
-                "Estimated Monthly Rent",
-                f"${result['estimated_monthly_rent']:,.0f}",
-                f"Range: ${result['low_estimate_rent']:,.0f} - ${result['high_estimate_rent']:,.0f}"
-            )
-            st.caption(f"Confidence: {result['confidence_score']*100:.0f}%")
+    # FOUR RESULT CARDS
+    col1, col2, col3, col4 = st.columns(4)
 
-        with col2:
-            st.metric(
-                "DSCR",
-                f"{result['DSCR']:.2f}",
-                delta=None
-            )
+    with col1:
+        st.metric(
+            label="DSCR",
+            value=f"{result['DSCR']:.2f}"
+        )
+        risk = result['risk_label']
+        if risk == "Excellent":
+            st.success(f"✓ {risk}")
+        elif risk == "Good":
+            st.success(f"✓ {risk}")
+        else:  # Borderline
+            st.warning(f"⚠ {risk}")
 
-        with col3:
-            cashflow = result['monthly_cashflow']
-            st.metric(
-                "Monthly Cashflow",
-                f"${abs(cashflow):,.2f}",
-                delta=f"{'Positive' if cashflow >= 0 else 'Negative'}"
-            )
+    with col2:
+        st.metric(
+            label="Est. Monthly Rent",
+            value=f"${result['estimated_monthly_rent']:,.0f}"
+        )
+        st.caption(f"Range: ${result['low_estimate_rent']:,.0f}-${result['high_estimate_rent']:,.0f}")
 
-        st.divider()
+    with col3:
+        cashflow = result['monthly_cashflow']
+        st.metric(
+            label="Monthly Cashflow",
+            value=f"${abs(cashflow):,.0f}",
+            delta="Positive" if cashflow >= 0 else "Negative"
+        )
+        st.caption("After mortgage, taxes, insurance, and HOA")
 
-        # Financial Details
-        st.subheader("💰 Financial Details")
+    with col4:
+        st.metric(
+            label="Annual Taxes",
+            value=f"${result['property_tax_annual']:,.0f}"
+        )
+        if result.get('sc_tax_calculation', {}).get('tax_accuracy') == 'ok':
+            county = result['sc_tax_calculation']['county_name']
+            st.caption(f"{county} County")
+        else:
+            st.caption("Based on your settings")
+
+    # SUMMARY SENTENCE
+    st.markdown("---")
+    st.info(
+        f"At your inputs, this property shows a DSCR of {result['DSCR']:.2f} and approximately "
+        f"${abs(result['monthly_cashflow']):,.0f}/month "
+        f"{'positive' if result['monthly_cashflow'] >= 0 else 'negative'} cashflow."
+    )
+
+    # PHONE BUTTON
+    st.markdown(
+        '<div style="text-align: center; margin: 2rem 0;">'
+        '<a href="tel:8433144104" style="'
+        'display: inline-block; '
+        'background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); '
+        'color: white; '
+        'padding: 1rem 2rem; '
+        'border-radius: 8px; '
+        'text-decoration: none; '
+        'font-weight: 600; '
+        'font-size: 1.1rem;">'
+        '📞 Click here to see real lender terms for this scenario'
+        '</a>'
+        '</div>',
+        unsafe_allow_html=True
+    )
+
+    # NOI CALCULATOR (Toggle)
+    st.markdown("---")
+    noi_toggle = st.checkbox("📊 Calculate additional investment metrics", value=False)
+
+    if noi_toggle:
+        st.markdown("### Investment Metrics Settings")
+        st.caption("Adjust assumptions to calculate Net Operating Income (NOI)")
+
+        # Input columns
         col1, col2 = st.columns(2)
 
         with col1:
-            st.markdown("**Purchase & Financing:**")
-            st.write(f"- Purchase Price: ${result['purchase_price']:,.0f}")
-            st.write(f"- Down Payment: ${result['down_payment_amount']:,.0f} ({result['down_payment_percent']*100:.0f}%)")
-            st.write(f"- Loan Amount: ${result['loan_amount']:,.0f}")
-            st.write(f"- Interest Rate: {result['interest_rate_annual']*100:.2f}%")
-            st.write(f"- Term: {result['term_years']} years")
-            st.write(f"- Loan Type: {'Interest-Only' if result['interest_only'] else 'Fully Amortized'}")
+            vacancy_rate = st.number_input(
+                "Vacancy Rate (%)",
+                min_value=0.0,
+                max_value=100.0,
+                value=5.0,
+                step=0.5,
+                help="Expected vacancy rate as percentage"
+            )
+
+            maintenance_rate = st.number_input(
+                "Maintenance Reserve (%)",
+                min_value=0.0,
+                max_value=100.0,
+                value=10.0,
+                step=0.5,
+                help="Annual maintenance reserve as percentage of rent"
+            )
 
         with col2:
-            st.markdown("**Monthly Expenses (PITI):**")
-            st.write(f"- Property Taxes: ${result['property_tax_monthly']:,.2f}")
-            st.write(f"- Insurance: ${result['insurance_monthly']:,.2f}")
-            st.write(f"- P&I (Debt Service): ${result['monthly_debt_service']:,.2f}")
-            total_monthly = result['property_tax_monthly'] + result['insurance_monthly'] + result['monthly_debt_service']
-            st.write(f"- **Total Monthly PITI: ${total_monthly:,.2f}**")
-            st.write("")
-            st.markdown("**DSCR Calculation:**")
-            st.write(f"- Annual NOI: ${result['NOI_annual']:,.2f}")
-            st.write(f"- Annual Debt Service: ${result['annual_debt_service']:,.2f}")
-            st.write(f"- **DSCR Ratio: {result['DSCR']:.2f}**")
+            utilities_mode = st.radio(
+                "Who pays utilities?",
+                ["Tenant pays utilities", "Owner pays utilities"],
+                horizontal=False,
+                key="utilities_toggle"
+            )
 
-        st.divider()
+            if utilities_mode == "Owner pays utilities":
+                manual_utilities = st.number_input(
+                    "Monthly Utilities (optional)",
+                    min_value=0.0,
+                    value=0.0,
+                    step=10.0,
+                    help="Leave at 0 to use automatic estimate"
+                )
+            else:
+                manual_utilities = 0.0
 
-        # Summary
-        st.subheader("📝 Summary")
-        st.info(result['human_summary'])
-
-        # Assumptions
-        with st.expander("🔍 Assumptions Made"):
-            st.write(result['assumptions'])
-
-        # Investor Notes
-        with st.expander("💡 Notes for Investor"):
-            st.warning(result['notes_for_investor'])
-
-        # Disclaimer
-        with st.expander("⚠️ Disclaimer"):
-            st.error(result['disclaimer'])
-
-        # Download JSON
-        st.divider()
-        import json
-        json_str = json.dumps(result, indent=2)
-        st.download_button(
-            label="📥 Download Full Results (JSON)",
-            data=json_str,
-            file_name=f"dscr_analysis_{address.replace(' ', '_')}.json",
-            mime="application/json"
+        # Calculate extended NOI
+        noi_result = calculator.calculate_extended_noi(
+            monthly_rent=result['estimated_monthly_rent'],
+            monthly_taxes=result['property_tax_monthly'],
+            monthly_insurance=result['insurance_monthly'],
+            monthly_hoa=hoa_monthly,
+            sqft=int(sqft) if sqft > 0 else None,
+            vacancy_rate=vacancy_rate / 100,
+            maintenance_rate=maintenance_rate / 100,
+            tenant_pays_utilities=(utilities_mode == "Tenant pays utilities"),
+            manual_utilities_monthly=manual_utilities
         )
 
-    else:
-        st.info("👈 Fill out the form in the Input tab and click 'Calculate DSCR' to see results here.")
+        # Display NOI Results
+        st.markdown("---")
+        st.markdown("### 📈 Net Operating Income (NOI)")
 
-# Sidebar with info
-with st.sidebar:
-    st.header("ℹ️ About")
-    st.write("""
-    This calculator uses AI to estimate rental income and calculate DSCR for investment properties.
+        # Key Metrics in columns
+        col1, col2, col3, col4 = st.columns(4)
 
-    **DSCR Risk Levels:**
-    - 🟢 **Strong** (≥1.30): Healthy margin
-    - 🟡 **Borderline** (1.10-1.30): Verify carefully
-    - 🔴 **Weak** (<1.10): May have negative cashflow
+        with col1:
+            st.metric(
+                label="Monthly NOI",
+                value=f"${noi_result['noi_monthly']:,.0f}"
+            )
 
-    **Expenses Calculated:**
-    - **P** = Principal (part of loan payment)
-    - **I** = Interest (part of loan payment)
-    - **T** = Property Taxes (default 1.2% annually)
-    - **I** = Insurance (default $150/month)
+        with col2:
+            st.metric(
+                label="Annual NOI",
+                value=f"${noi_result['noi_annual']:,.0f}"
+            )
 
-    **Note:** Does NOT include maintenance, HOA, property management, or other operating expenses.
-    """)
+        with col3:
+            st.metric(
+                label="Effective Gross Income",
+                value=f"${noi_result['effective_gross_income_monthly']:,.0f}/mo"
+            )
 
-    st.divider()
+        with col4:
+            st.metric(
+                label="Operating Expenses",
+                value=f"${noi_result['operating_expenses_monthly']:,.0f}/mo"
+            )
 
-    st.header("📚 Resources")
-    st.write("""
-    - Run examples: `python examples.py`
-    - Run tests: `python test_calculations.py`
-    - API docs: See README.md
-    """)
+        # Detailed Breakdown
+        st.markdown("---")
+        st.markdown("#### 📋 Operating Expense Breakdown")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.write("**Monthly Operating Expenses:**")
+            st.write(f"• Property Taxes: ${noi_result['monthly_taxes']:,.0f}")
+            st.write(f"• Insurance: ${noi_result['monthly_insurance']:,.0f}")
+            st.write(f"• HOA Fees: ${noi_result['monthly_hoa']:,.0f}")
+            st.write(f"• Maintenance Reserve ({maintenance_rate:.1f}%): ${noi_result['maintenance_monthly']:,.0f}")
+            st.write(f"• Utilities: ${noi_result['utilities_monthly']:,.0f}")
+            st.write(f"**Total: ${noi_result['operating_expenses_monthly']:,.0f}**")
+
+        with col2:
+            st.write("**Assumptions Used:**")
+            st.write(f"• Monthly Rent: ${noi_result['monthly_rent']:,.0f}")
+            st.write(f"• Vacancy Rate: {noi_result['vacancy_rate']*100:.1f}%")
+            st.write(f"• Maintenance Reserve: {noi_result['maintenance_rate']*100:.1f}%")
+            st.write(f"• {noi_result['utilities_note']}")
+            st.write(f"• Effective Gross Income: ${noi_result['effective_gross_income_monthly']:,.0f}/mo")
+
+        # Info box with NOI context
+        st.info(
+            f"💡 **What is NOI?** Net Operating Income (NOI) is the total income from the property minus all operating expenses. "
+            f"Your property generates **${noi_result['noi_monthly']:,.0f}/month** or **${noi_result['noi_annual']:,.0f}/year** "
+            f"in NOI before debt service (mortgage payments). This is a key metric for evaluating investment performance."
+        )
+
+    # SC TAX DETAILS (Optional expander)
+    if result.get('sc_tax_calculation', {}).get('tax_accuracy') == 'ok':
+        with st.expander("🏛️ South Carolina Tax Details"):
+            sc_tax = result['sc_tax_calculation']
+            col1, col2 = st.columns(2)
+            with col1:
+                st.write(f"**County:** {sc_tax['county_name']}")
+                st.write(f"**Millage Rate:** {sc_tax['millage_rate']:.3f}")
+                st.write(f"**Assessment Ratio:** {sc_tax['assessment_ratio']*100:.1f}%")
+            with col2:
+                st.write(f"**Taxable Value:** ${sc_tax['taxable_value']:,.2f}")
+                st.write(f"**Monthly Taxes:** ${sc_tax['monthly_taxes']:,.2f}")
+                st.write(f"**Annual Taxes:** ${sc_tax['annual_taxes']:,.2f}")
+
+# DISCLAIMER (always visible at bottom)
+st.markdown("---")
+st.markdown(
+    '<p style="color: #9ca3af; font-size: 0.75rem; text-align: center; line-height: 1.4;">'
+    '<strong>Disclaimer:</strong> All calculations and figures shown on this site are estimates only and are provided for informational purposes. '
+    'DSCR, rent projections, tax amounts, and cashflow outputs may vary by lender, property type, county assessment data, and actual underwriting guidelines. '
+    'Nothing on this page constitutes a loan approval, financial advice, or a binding offer of credit. '
+    'Please verify all numbers with a licensed mortgage professional.'
+    '</p>',
+    unsafe_allow_html=True
+)

@@ -7,7 +7,11 @@ Debt Service Coverage Ratio (DSCR) for investment properties.
 
 import json
 import math
+import os
+import re
 from typing import Dict, Optional, Any
+from pathlib import Path
+from sc_rental_rates import get_rental_rate_for_location
 
 
 class AIRentDSCRCalculator:
@@ -20,6 +24,189 @@ class AIRentDSCRCalculator:
 
     def __init__(self):
         self.mode = "ai_rent_and_dscr"
+        self.sc_millage_data = self._load_sc_millage_data()
+
+    def _load_sc_millage_data(self) -> Dict[str, Any]:
+        """Load South Carolina county millage rates from JSON file."""
+        try:
+            json_path = Path(__file__).parent / "sc_county_base_millage_2024.json"
+            with open(json_path, 'r') as f:
+                return json.load(f)
+        except Exception:
+            # If file not found or error, return empty structure
+            return {"metadata": {}, "counties": {}}
+
+    def _detect_sc_county(self, address: str) -> Optional[str]:
+        """
+        Detect South Carolina county from address.
+
+        Returns normalized county name (e.g., "Horry") or None if not SC or not found.
+        """
+        if not address:
+            return None
+
+        address_upper = address.upper()
+
+        # Check if address is in South Carolina
+        if not (' SC' in address_upper or 'SOUTH CAROLINA' in address_upper):
+            return None
+
+        # SC County name mapping (common variations)
+        county_patterns = {
+            'ABBEVILLE': 'Abbeville',
+            'AIKEN': 'Aiken',
+            'ALLENDALE': 'Allendale',
+            'ANDERSON': 'Anderson',
+            'BAMBERG': 'Bamberg',
+            'BARNWELL': 'Barnwell',
+            'BEAUFORT': 'Beaufort',
+            'BERKELEY': 'Berkeley',
+            'CALHOUN': 'Calhoun',
+            'CHARLESTON': 'Charleston',
+            'CHEROKEE': 'Cherokee',
+            'CHESTER': 'Chester',
+            'CHESTERFIELD': 'Chesterfield',
+            'CLARENDON': 'Clarendon',
+            'COLLETON': 'Colleton',
+            'DARLINGTON': 'Darlington',
+            'DILLON': 'Dillon',
+            'DORCHESTER': 'Dorchester',
+            'EDGEFIELD': 'Edgefield',
+            'FAIRFIELD': 'Fairfield',
+            'FLORENCE': 'Florence',
+            'GEORGETOWN': 'Georgetown',
+            'GREENVILLE': 'Greenville',
+            'GREENWOOD': 'Greenwood',
+            'HAMPTON': 'Hampton',
+            'HORRY': 'Horry',
+            'JASPER': 'Jasper',
+            'KERSHAW': 'Kershaw',
+            'LANCASTER': 'Lancaster',
+            'LAURENS': 'Laurens',
+            'LEE': 'Lee',
+            'LEXINGTON': 'Lexington',
+            'MCCORMICK': 'McCormick',
+            'MARION': 'Marion',
+            'MARLBORO': 'Marlboro',
+            'NEWBERRY': 'Newberry',
+            'OCONEE': 'Oconee',
+            'ORANGEBURG': 'Orangeburg',
+            'PICKENS': 'Pickens',
+            'RICHLAND': 'Richland',
+            'SALUDA': 'Saluda',
+            'SPARTANBURG': 'Spartanburg',
+            'SUMTER': 'Sumter',
+            'UNION': 'Union',
+            'WILLIAMSBURG': 'Williamsburg',
+            'YORK': 'York'
+        }
+
+        # Also map common city names to counties
+        city_to_county = {
+            'MYRTLE BEACH': 'Horry',
+            'NORTH MYRTLE BEACH': 'Horry',
+            'LITTLE RIVER': 'Horry',
+            'SURFSIDE BEACH': 'Horry',
+            'COLUMBIA': 'Richland',
+            'CHARLESTON': 'Charleston',
+            'GREENVILLE': 'Greenville',
+            'SPARTANBURG': 'Spartanburg',
+            'HILTON HEAD': 'Beaufort',
+            'BLUFFTON': 'Beaufort',
+            'MOUNT PLEASANT': 'Charleston',
+            'SUMMERVILLE': 'Dorchester',
+            'ROCK HILL': 'York',
+            'AIKEN': 'Aiken',
+            'FLORENCE': 'Florence',
+            'ANDERSON': 'Anderson'
+        }
+
+        # Check for direct county name mentions
+        for pattern, county_name in county_patterns.items():
+            if pattern in address_upper:
+                return county_name
+
+        # Check for city names
+        for city, county_name in city_to_county.items():
+            if city in address_upper:
+                return county_name
+
+        # Try ZIP code mapping for common SC coastal areas
+        zip_patterns = {
+            r'29566|29568|29572|29575|29576|29577|29578|29579|29588': 'Horry',  # Myrtle Beach area
+            r'29902|29910|29926|29928': 'Beaufort',  # Hilton Head area
+            r'29401|29403|29407|29412|29414|29424|29425|29492': 'Charleston',
+            r'29201|29203|29204|29205|29206|29209|29210|29223': 'Richland',  # Columbia
+            r'29601|29605|29607|29609|29615|29617': 'Greenville'
+        }
+
+        for zip_pattern, county_name in zip_patterns.items():
+            if re.search(zip_pattern, address_upper):
+                return county_name
+
+        return None
+
+    def _calculate_sc_property_tax(
+        self,
+        purchase_price: float,
+        county_name: Optional[str]
+    ) -> Dict[str, Any]:
+        """
+        Calculate South Carolina property tax using exact formula.
+
+        Formula:
+        - Assessment Ratio = 0.06 (6% for rental/investment properties)
+        - Taxable Value = Purchase Price × 0.06
+        - Annual Taxes = Taxable Value × Millage Rate
+        - Monthly Taxes = Annual Taxes / 12
+
+        Returns dict with tax calculation details.
+        """
+        result = {
+            "county_name": county_name,
+            "millage_rate": None,
+            "assessment_ratio": None,
+            "taxable_value": None,
+            "annual_taxes": None,
+            "monthly_taxes": None,
+            "tax_accuracy": "missing_value"
+        }
+
+        # Check if we have a valid purchase price
+        if not purchase_price or purchase_price <= 0:
+            result["tax_accuracy"] = "missing_value"
+            return result
+
+        # Check if county was detected
+        if not county_name:
+            result["tax_accuracy"] = "county_not_found"
+            return result
+
+        # Look up millage rate from JSON
+        counties_data = self.sc_millage_data.get("counties", {})
+        millage_rate = counties_data.get(county_name)
+
+        if millage_rate is None:
+            result["tax_accuracy"] = "county_not_found"
+            return result
+
+        # Apply SC tax formula EXACTLY
+        ASSESSMENT_RATIO = 0.06  # 6% for rental/investment properties
+
+        taxable_value = purchase_price * ASSESSMENT_RATIO
+        annual_taxes = taxable_value * millage_rate
+        monthly_taxes = annual_taxes / 12
+
+        result.update({
+            "millage_rate": millage_rate,
+            "assessment_ratio": ASSESSMENT_RATIO,
+            "taxable_value": round(taxable_value, 2),
+            "annual_taxes": round(annual_taxes, 2),
+            "monthly_taxes": round(monthly_taxes, 2),
+            "tax_accuracy": "ok"
+        })
+
+        return result
 
     def calculate(
         self,
@@ -31,8 +218,8 @@ class AIRentDSCRCalculator:
         term_years: int = 30,
         interest_only: bool = False,
         vacancy_rate: float = 0.0,  # Per requirements: 0% vacancy
-        property_tax_rate: Optional[float] = None,  # Annual tax rate (e.g., 0.012 for 1.2%)
         insurance_monthly: Optional[float] = None,  # Monthly insurance cost
+        hoa_monthly: float = 0.0,  # Monthly HOA fees
         property_type: Optional[str] = None,
         beds: Optional[int] = None,
         baths: Optional[float] = None,
@@ -44,10 +231,11 @@ class AIRentDSCRCalculator:
         """
         Calculate estimated rent and DSCR for a property.
 
-        Expenses calculated: Principal & Interest (P&I), Property Taxes, Insurance only.
+        Expenses calculated: Principal & Interest (P&I), Property Taxes, Insurance, and HOA.
+        Property taxes are calculated automatically using county millage rates.
 
         Args:
-            address: Property address
+            address: Property address (must include county/city and state)
             purchase_price: Purchase price in USD
             down_payment_amount: Down payment in USD (optional)
             down_payment_percent: Down payment as decimal (e.g., 0.20 for 20%)
@@ -55,8 +243,8 @@ class AIRentDSCRCalculator:
             term_years: Loan term in years
             interest_only: Whether loan is interest-only
             vacancy_rate: Vacancy rate as decimal (default 0.0)
-            property_tax_rate: Annual property tax rate as decimal (default 0.012 for 1.2%)
             insurance_monthly: Monthly insurance cost in USD (default 150)
+            hoa_monthly: Monthly HOA fees in USD (default 0.0)
             property_type: Type of property (SFR, condo, etc.)
             beds: Number of bedrooms
             baths: Number of bathrooms
@@ -93,12 +281,34 @@ class AIRentDSCRCalculator:
         confidence_score = rent_estimates['confidence']
         assumptions = rent_estimates['assumptions']
 
-        # Step 3: Calculate property taxes
-        if property_tax_rate is None:
-            property_tax_rate = 0.012  # Default 1.2% annually (US average)
+        # Step 3: Calculate property taxes using county millage rates
+        # REQUIRED: County must be detected and millage rate must be found
+        sc_county = self._detect_sc_county(address)
+        sc_tax_calc = None
 
-        property_tax_annual = purchase_price * property_tax_rate
-        property_tax_monthly = property_tax_annual / 12
+        if not sc_county:
+            # Cannot detect county - return error
+            raise ValueError(
+                f"Cannot detect county from address: '{address}'. "
+                "Property taxes require county millage rates. "
+                "Please provide a complete address with city/county and state (SC). "
+                "Example: 'Myrtle Beach, SC' or 'Charleston County, SC'"
+            )
+
+        # Calculate taxes using SC millage rate
+        sc_tax_calc = self._calculate_sc_property_tax(purchase_price, sc_county)
+
+        if sc_tax_calc["tax_accuracy"] != "ok":
+            # Millage rate not found for this county
+            raise ValueError(
+                f"County '{sc_county}' detected but millage rate not found in database. "
+                "Please verify the address is in South Carolina and includes a valid county/city."
+            )
+
+        # Use SC calculated taxes
+        property_tax_annual = sc_tax_calc["annual_taxes"]
+        property_tax_monthly = sc_tax_calc["monthly_taxes"]
+        property_tax_rate = sc_tax_calc["annual_taxes"] / purchase_price  # Back-calculate rate for display
 
         # Step 4: Set insurance
         if insurance_monthly is None:
@@ -107,9 +317,9 @@ class AIRentDSCRCalculator:
         # Step 5: Calculate effective gross income (with vacancy)
         effective_gross_income_monthly = estimated_monthly_rent * (1 - vacancy_rate)
 
-        # Step 6: Calculate total monthly expenses (Taxes + Insurance only)
+        # Step 6: Calculate total monthly expenses (Taxes + Insurance + HOA)
         # Note: P&I (debt service) is calculated separately and NOT included in operating expenses
-        monthly_operating_expenses = property_tax_monthly + insurance_monthly
+        monthly_operating_expenses = property_tax_monthly + insurance_monthly + hoa_monthly
 
         # Step 7: Calculate NOI (Net Operating Income)
         # NOI = Income - Operating Expenses (does NOT subtract debt service)
@@ -196,6 +406,11 @@ class AIRentDSCRCalculator:
             "property_tax_annual": property_tax_annual,
             "insurance_monthly": insurance_monthly,
             "insurance_annual": insurance_monthly * 12,
+            "hoa_monthly": hoa_monthly,
+            "hoa_annual": hoa_monthly * 12,
+
+            # SC tax calculation details (if applicable)
+            "sc_tax_calculation": sc_tax_calc if sc_tax_calc else None,
 
             "effective_gross_income_monthly": effective_gross_income_monthly,
             "monthly_operating_expenses": monthly_operating_expenses,
@@ -285,42 +500,44 @@ class AIRentDSCRCalculator:
         mls_description: Optional[str]
     ) -> Dict[str, Any]:
         """
-        Estimate monthly market rent using the new multi-step formula:
+        Estimate monthly market rent prioritizing square footage and neighborhood.
 
-        STEP 1: Price-based rent estimate
-        STEP 2: SqFt-based rent estimate (if available) and calculate BaseRent
-        STEP 3: Personalization Adjustments (capped at ±25%)
-        STEP 4: LLM Adjustment (general correction, capped at ±15%)
-        STEP 5: Combine adjustments with total cap at ±25%
+        Formula:
+        1. Primary: SqFt × $/sqft (adjusted for neighborhood/location)
+        2. Secondary: Price-based validation (0.85% yield)
+        3. BaseRent = SqFt-based with neighborhood premium applied
+        4. Apply adjustment factor for property characteristics
+        5. Range = ±10% of estimated rent
         """
 
         assumptions_list = []
-        personalization_details = []
-        confidence = 0.70  # Start with good confidence for formula-based approach
+        confidence = 0.75  # Higher confidence with sqft + location data
 
-        # ========== CONSTANTS (MANDATORY — NEVER CHANGE) ==========
-        YIELD_LOCAL = 0.0085  # 0.85% monthly yield
-        RENT_PER_SQFT_LOCAL = 1.40  # $1.40 per square foot
-        PERSONALIZATION_CAP = 0.25  # ±25%
-        LLM_ADJUSTMENT_CAP = 0.15  # ±15%
-        TOTAL_ADJUSTMENT_CAP = 0.25  # ±25%
-        LOW_RENT_MULTIPLIER = 0.90  # 90% for low estimate
-        HIGH_RENT_MULTIPLIER = 1.10  # 110% for high estimate
-
-        # ========== STEP 1: Price-based rent estimate ==========
-        rent_price = purchase_price * YIELD_LOCAL
-        assumptions_list.append(f"Price-based estimate: ${rent_price:,.0f} (0.85% monthly yield)")
-
-        # ========== STEP 2: SqFt-based rent estimate and BaseRent ==========
+        # Step 1: Use config-based rental rates (sc_rental_rates.py)
+        # Hard-coded rates per SC city based on real market data
         if sqft is not None and sqft > 0:
-            rent_sqft = sqft * RENT_PER_SQFT_LOCAL
-            base_rent = (rent_price + rent_sqft) / 2
-            assumptions_list.append(f"SqFt-based estimate: ${rent_sqft:,.0f} ({sqft} sqft × ${RENT_PER_SQFT_LOCAL}/sqft)")
-            assumptions_list.append(f"Base rent: ${base_rent:,.0f} (average of both methods)")
+            # Get rental rate from configuration file
+            rate_info = get_rental_rate_for_location(address, sqft)
+
+            location_name = rate_info['location']
+            rent_per_sqft = rate_info['rate_per_sqft']
+            base_rent = rate_info['estimated_rent']
+            size_tier = rate_info['size_tier']
+            baseline_1800 = rate_info['baseline_1800_sqft']
+
+            # Log assumptions
+            assumptions_list.append(f"Market: {location_name} (1800 sqft baseline: ${baseline_1800:,.0f})")
+            assumptions_list.append(f"Size tier: {size_tier} - Rate: ${rent_per_sqft}/sqft")
+            assumptions_list.append(f"Primary estimate: ${base_rent:,.0f} ({sqft} sqft × ${rent_per_sqft}/sqft)")
+
+            # Price-based as secondary validation
+            rent_price = purchase_price * 0.0085
+            assumptions_list.append(f"Price check: ${rent_price:,.0f} (0.85% yield validation)")
         else:
-            base_rent = rent_price
-            assumptions_list.append("Square footage not provided - using price-based estimate only")
-            confidence *= 0.95
+            # Fallback if no sqft
+            base_rent = purchase_price * 0.0085
+            assumptions_list.append("No sqft provided - using price-based")
+            confidence *= 0.60
 
         # ========== STEP 3: Personalization Adjustments ==========
         # Fact-check property features from MLS description
@@ -355,50 +572,7 @@ class AIRentDSCRCalculator:
             assumptions_list.append("Condition not specified - assuming average (0%)")
             confidence *= 0.95
 
-        # 3.2 School district quality
-        if fact_checked.get('school_quality'):
-            school_quality = fact_checked['school_quality']
-            if school_quality == 'excellent':
-                adjustment = 0.075  # +7.5% (mid-range of 5-10%)
-                total_personalization_percent += adjustment
-                personalization_details.append(f"Excellent school district: +{adjustment*100:.1f}%")
-            elif school_quality == 'good':
-                adjustment = 0.04  # +4% (mid-range of 3-5%)
-                total_personalization_percent += adjustment
-                personalization_details.append(f"Good school district: +{adjustment*100:.0f}%")
-            elif school_quality == 'poor':
-                adjustment = -0.075  # -7.5% (mid-range of -5 to -10%)
-                total_personalization_percent += adjustment
-                personalization_details.append(f"Poor school district: {adjustment*100:.1f}%")
-
-        # 3.3 Location desirability
-        if fact_checked.get('near_beach'):
-            adjustment = 0.12  # +12% (mid-range of 8-15%)
-            total_personalization_percent += adjustment
-            personalization_details.append(f"Near beach/coast: +{adjustment*100:.0f}%")
-        if fact_checked.get('near_major_employer'):
-            adjustment = 0.10  # +10% (mid-range of 8-15%)
-            total_personalization_percent += adjustment
-            personalization_details.append(f"Near major employer: +{adjustment*100:.0f}%")
-        if fact_checked.get('rural_low_demand'):
-            adjustment = -0.075  # -7.5% (mid-range of -5 to -10%)
-            total_personalization_percent += adjustment
-            personalization_details.append(f"Rural/low demand area: {adjustment*100:.1f}%")
-
-        # 3.4 Amenities
-        if fact_checked.get('has_pool') or fact_checked.get('has_gym') or fact_checked.get('gated_community'):
-            amenities = []
-            if fact_checked.get('has_pool'):
-                amenities.append('pool')
-            if fact_checked.get('has_gym'):
-                amenities.append('gym')
-            if fact_checked.get('gated_community'):
-                amenities.append('gated community')
-            adjustment = 0.055  # +5.5% (mid-range of 3-8%)
-            total_personalization_percent += adjustment
-            personalization_details.append(f"Premium amenities ({', '.join(amenities)}): +{adjustment*100:.1f}%")
-
-        # 3.5 Bedrooms/bathrooms
+        # Adjust for bedrooms (if unusual size)
         if beds is not None:
             if beds >= 4:
                 adjustment = 0.125  # +12.5% (mid-range of 10-15%)
@@ -607,12 +781,12 @@ class AIRentDSCRCalculator:
 
     def _get_risk_label(self, DSCR: float) -> str:
         """Determine risk label based on DSCR."""
-        if DSCR >= 1.30:
-            return "Strong"
-        elif DSCR >= 1.10:
-            return "Borderline"
+        if DSCR >= 1.25:
+            return "Excellent"
+        elif DSCR >= 1.0:
+            return "Good"
         else:
-            return "Weak"
+            return "Borderline"
 
     def _generate_inputs_summary(
         self,
@@ -682,6 +856,110 @@ class AIRentDSCRCalculator:
         notes.append("This calculation includes only P&I, Taxes, and Insurance. Additional expenses (maintenance, HOA, property management, etc.) will reduce actual cashflow.")
 
         return " ".join(notes)
+
+    def calculate_extended_noi(
+        self,
+        monthly_rent: float,
+        monthly_taxes: float,
+        monthly_insurance: float,
+        monthly_hoa: float,
+        sqft: Optional[int] = None,
+        vacancy_rate: float = 0.05,
+        maintenance_rate: float = 0.10,
+        tenant_pays_utilities: bool = True,
+        manual_utilities_monthly: float = 0.0
+    ) -> Dict[str, Any]:
+        """
+        Calculate extended NOI with all operating expenses.
+
+        Uses the exact formulas specified:
+        1. Effective Gross Income = monthlyRent * (1 - vacancyRate)
+        2. Maintenance = monthlyRent * maintenanceRate
+        3. Operating Expenses = taxes + insurance + hoa + maintenance + utilities
+        4. NOI = Effective Gross Income - Operating Expenses
+
+        Utilities formula:
+        - If tenant pays: utilities = 0
+        - If owner pays:
+          - If manual > 0: use manual
+          - Else: estimated = sqft * 0.16, bounded [75, 350], default sqft=1500
+
+        Args:
+            monthly_rent: Monthly rental income
+            monthly_taxes: Monthly property taxes
+            monthly_insurance: Monthly insurance cost
+            monthly_hoa: Monthly HOA fees
+            sqft: Square footage (optional, default 1500 for utilities estimate)
+            vacancy_rate: Vacancy rate as decimal (default 0.05)
+            maintenance_rate: Maintenance rate as decimal (default 0.10)
+            tenant_pays_utilities: Whether tenant pays utilities (default True)
+            manual_utilities_monthly: Manual utilities amount if owner pays (default 0)
+
+        Returns:
+            Dictionary with NOI calculations and breakdown
+        """
+
+        # 1. Effective Gross Income
+        effective_gross_income_monthly = monthly_rent * (1 - vacancy_rate)
+
+        # 2. Maintenance
+        maintenance_monthly = monthly_rent * maintenance_rate
+
+        # 3. Utilities
+        if tenant_pays_utilities:
+            utilities_monthly = 0.0
+            utilities_note = "Tenant pays utilities"
+        else:
+            if manual_utilities_monthly > 0:
+                utilities_monthly = manual_utilities_monthly
+                utilities_note = f"Manual utilities: ${manual_utilities_monthly:,.0f}"
+            else:
+                # Use estimator
+                sqft_for_calc = sqft if sqft and sqft > 0 else 1500
+                estimated_utilities = sqft_for_calc * 0.16
+
+                # Bound to [75, 350]
+                if estimated_utilities < 75:
+                    estimated_utilities = 75
+                elif estimated_utilities > 350:
+                    estimated_utilities = 350
+
+                utilities_monthly = estimated_utilities
+                utilities_note = f"Estimated: {sqft_for_calc} sqft × $0.16 = ${estimated_utilities:,.0f}"
+
+        # 4. Operating Expenses
+        operating_expenses_monthly = (
+            monthly_taxes +
+            monthly_insurance +
+            monthly_hoa +
+            maintenance_monthly +
+            utilities_monthly
+        )
+
+        # 5. NOI
+        noi_monthly = effective_gross_income_monthly - operating_expenses_monthly
+        noi_annual = noi_monthly * 12
+
+        # Return detailed breakdown
+        return {
+            'effective_gross_income_monthly': round(effective_gross_income_monthly, 2),
+            'operating_expenses_monthly': round(operating_expenses_monthly, 2),
+            'noi_monthly': round(noi_monthly, 2),
+            'noi_annual': round(noi_annual, 2),
+
+            # Breakdown
+            'vacancy_rate': vacancy_rate,
+            'maintenance_rate': maintenance_rate,
+            'maintenance_monthly': round(maintenance_monthly, 2),
+            'utilities_monthly': round(utilities_monthly, 2),
+            'utilities_note': utilities_note,
+
+            # Components
+            'monthly_taxes': monthly_taxes,
+            'monthly_insurance': monthly_insurance,
+            'monthly_hoa': monthly_hoa,
+            'monthly_rent': monthly_rent
+        }
 
 
 def calculate_ai_rent_dscr(params: Dict[str, Any]) -> str:
