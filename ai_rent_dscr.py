@@ -535,20 +535,44 @@ class AIRentDSCRCalculator:
             neighborhood_name = "Base SC market"
 
             # SC Neighborhood adjustments (multiplied against base rate)
-            # Recalibrated to match real market rents
-            if any(area in address_upper for area in ['MYRTLE BEACH', 'NORTH MYRTLE', 'SURFSIDE', 'LITTLE RIVER']):
-                neighborhood_multiplier = 1.08  # +8% for Myrtle Beach area
-                neighborhood_name = "Myrtle Beach/Little River area"
-            elif any(area in address_upper for area in ['HILTON HEAD', 'KIAWAH', 'ISLE OF PALMS']):
-                neighborhood_multiplier = 1.15  # +15% for luxury coastal
-                neighborhood_name = "Luxury coastal"
-            elif any(area in address_upper for area in ['CHARLESTON', 'MOUNT PLEASANT', 'DANIEL ISLAND']):
-                neighborhood_multiplier = 1.06  # +6% for Charleston metro
+            # Calibrated with real SC luxury market data:
+            # - Hilton Head 1800 sqft: ~$3,600/mo
+            # - Premium Charleston 1800 sqft: ~$3,600/mo
+            # - Myrtle Beach 1800 sqft: ~$2,200/mo
+
+            # TIER 1: Ultra-luxury coastal islands (75-80% premium)
+            if any(area in address_upper for area in ['HILTON HEAD', 'KIAWAH', 'SEABROOK', 'ISLE OF PALMS', 'SULLIVANS ISLAND', 'FRIPP ISLAND']):
+                neighborhood_multiplier = 1.77  # +77% for ultra-luxury coastal
+                neighborhood_name = "Ultra-luxury coastal"
+
+            # TIER 2: Premium Charleston waterfront/downtown (65-70% premium)
+            elif any(area in address_upper for area in ['DANIEL ISLAND']) or \
+                 ('CHARLESTON' in address_upper and any(keyword in address_upper for keyword in ['DOWNTOWN', 'WATERFRONT', 'PENINSULA', 'BATTERY'])):
+                neighborhood_multiplier = 1.68  # +68% for premium Charleston
+                neighborhood_name = "Premium Charleston"
+
+            # TIER 3: Charleston metro and Mount Pleasant (15-20% premium)
+            elif any(area in address_upper for area in ['CHARLESTON', 'MOUNT PLEASANT', 'JAMES ISLAND', 'WEST ASHLEY', 'SUMMERVILLE']):
+                neighborhood_multiplier = 1.18  # +18% for Charleston metro
                 neighborhood_name = "Charleston metro"
-            elif any(area in address_upper for area in ['COLUMBIA', 'LEXINGTON', 'IRMO']):
+
+            # TIER 4: Myrtle Beach tourist market (8% premium)
+            elif any(area in address_upper for area in ['MYRTLE BEACH', 'NORTH MYRTLE', 'SURFSIDE', 'LITTLE RIVER', 'MURRELLS INLET', 'PAWLEYS ISLAND']):
+                neighborhood_multiplier = 1.08  # +8% for beach/tourist market
+                neighborhood_name = "Myrtle Beach area"
+
+            # TIER 5: Other coastal areas (10% premium)
+            elif any(area in address_upper for area in ['BEAUFORT', 'EDISTO', 'FOLLY BEACH', 'GEORGETOWN']):
+                neighborhood_multiplier = 1.10  # +10% for other coastal
+                neighborhood_name = "Other coastal SC"
+
+            # TIER 6: Columbia metro (4% discount)
+            elif any(area in address_upper for area in ['COLUMBIA', 'LEXINGTON', 'IRMO', 'FOREST ACRES']):
                 neighborhood_multiplier = 0.96  # -4% for Columbia
                 neighborhood_name = "Columbia metro"
-            elif any(area in address_upper for area in ['GREENVILLE', 'SPARTANBURG', 'ANDERSON']):
+
+            # TIER 7: Upstate metros (7% discount)
+            elif any(area in address_upper for area in ['GREENVILLE', 'SPARTANBURG', 'ANDERSON', 'CLEMSON', 'SIMPSONVILLE']):
                 neighborhood_multiplier = 0.93  # -7% for Upstate
                 neighborhood_name = "Upstate metro"
 
