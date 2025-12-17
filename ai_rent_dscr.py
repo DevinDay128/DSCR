@@ -11,6 +11,7 @@ import os
 import re
 from typing import Dict, Optional, Any
 from pathlib import Path
+from sc_rental_rates import get_rental_rate_for_location
 
 
 class AIRentDSCRCalculator:
@@ -505,88 +506,22 @@ class AIRentDSCRCalculator:
         assumptions_list = []
         confidence = 0.75  # Higher confidence with sqft + location data
 
-        # Step 1: Determine base $/sqft rate using TIERED SYSTEM
-        # Larger properties have lower $/sqft rates (reflects real market dynamics)
-        address_upper = address.upper()
-
+        # Step 1: Use config-based rental rates (sc_rental_rates.py)
+        # Hard-coded rates per SC city based on real market data
         if sqft is not None and sqft > 0:
-            # Tiered base rates by property size
-            # Calibrated to real SC market: 1800 sqft in Myrtle Beach ≈ $2,200/mo
-            if sqft < 1000:
-                base_rate = 1.34  # Small properties (studios, 1-beds)
-                size_tier = "Small (<1000 sqft)"
-            elif sqft < 1500:
-                base_rate = 1.21  # Typical 2-bed
-                size_tier = "Medium (1000-1500 sqft)"
-            elif sqft < 2000:
-                base_rate = 1.13  # Typical 3-bed
-                size_tier = "Standard (1500-2000 sqft)"
-            elif sqft < 2500:
-                base_rate = 1.00  # Larger 4-bed
-                size_tier = "Large (2000-2500 sqft)"
-            else:
-                base_rate = 0.88  # Very large homes
-                size_tier = "Very Large (>2500 sqft)"
+            # Get rental rate from configuration file
+            rate_info = get_rental_rate_for_location(address, sqft)
 
-            assumptions_list.append(f"Size tier: {size_tier} - Base ${base_rate}/sqft")
+            location_name = rate_info['location']
+            rent_per_sqft = rate_info['rate_per_sqft']
+            base_rent = rate_info['estimated_rent']
+            size_tier = rate_info['size_tier']
+            baseline_1800 = rate_info['baseline_1800_sqft']
 
-            # Step 2: Apply neighborhood multiplier to base rate
-            neighborhood_multiplier = 1.0
-            neighborhood_name = "Base SC market"
-
-            # SC Neighborhood adjustments (multiplied against base rate)
-            # Calibrated with real SC luxury market data:
-            # - Hilton Head 1800 sqft: ~$3,600/mo
-            # - Premium Charleston 1800 sqft: ~$3,600/mo
-            # - Myrtle Beach 1800 sqft: ~$2,200/mo
-
-            # TIER 1: Ultra-luxury coastal islands (75-80% premium)
-            if any(area in address_upper for area in ['HILTON HEAD', 'KIAWAH', 'SEABROOK', 'ISLE OF PALMS', 'SULLIVANS ISLAND', 'FRIPP ISLAND']):
-                neighborhood_multiplier = 1.77  # +77% for ultra-luxury coastal
-                neighborhood_name = "Ultra-luxury coastal"
-
-            # TIER 2: Premium Charleston waterfront/downtown (65-70% premium)
-            elif any(area in address_upper for area in ['DANIEL ISLAND']) or \
-                 ('CHARLESTON' in address_upper and any(keyword in address_upper for keyword in ['DOWNTOWN', 'WATERFRONT', 'PENINSULA', 'BATTERY'])):
-                neighborhood_multiplier = 1.68  # +68% for premium Charleston
-                neighborhood_name = "Premium Charleston"
-
-            # TIER 3: Charleston metro and Mount Pleasant (15-20% premium)
-            elif any(area in address_upper for area in ['CHARLESTON', 'MOUNT PLEASANT', 'JAMES ISLAND', 'WEST ASHLEY', 'SUMMERVILLE']):
-                neighborhood_multiplier = 1.18  # +18% for Charleston metro
-                neighborhood_name = "Charleston metro"
-
-            # TIER 4: Myrtle Beach tourist market (8% premium)
-            elif any(area in address_upper for area in ['MYRTLE BEACH', 'NORTH MYRTLE', 'SURFSIDE', 'LITTLE RIVER', 'MURRELLS INLET', 'PAWLEYS ISLAND']):
-                neighborhood_multiplier = 1.08  # +8% for beach/tourist market
-                neighborhood_name = "Myrtle Beach area"
-
-            # TIER 5: Other coastal areas (10% premium)
-            elif any(area in address_upper for area in ['BEAUFORT', 'EDISTO', 'FOLLY BEACH', 'GEORGETOWN']):
-                neighborhood_multiplier = 1.10  # +10% for other coastal
-                neighborhood_name = "Other coastal SC"
-
-            # TIER 6: Columbia metro (4% discount)
-            elif any(area in address_upper for area in ['COLUMBIA', 'LEXINGTON', 'IRMO', 'FOREST ACRES']):
-                neighborhood_multiplier = 0.96  # -4% for Columbia
-                neighborhood_name = "Columbia metro"
-
-            # TIER 7: Upstate metros (7% discount)
-            elif any(area in address_upper for area in ['GREENVILLE', 'SPARTANBURG', 'ANDERSON', 'CLEMSON', 'SIMPSONVILLE']):
-                neighborhood_multiplier = 0.93  # -7% for Upstate
-                neighborhood_name = "Upstate metro"
-
-            # Final $/sqft rate = base rate × neighborhood multiplier
-            rent_per_sqft = base_rate * neighborhood_multiplier
-
-            if neighborhood_multiplier != 1.0:
-                assumptions_list.append(
-                    f"{neighborhood_name}: {neighborhood_multiplier:.0%} adjustment → ${rent_per_sqft:.2f}/sqft"
-                )
-
-            # Step 3: Calculate base rent
-            base_rent = sqft * rent_per_sqft
-            assumptions_list.append(f"Primary estimate: ${base_rent:,.0f} ({sqft} sqft × ${rent_per_sqft:.2f}/sqft)")
+            # Log assumptions
+            assumptions_list.append(f"Market: {location_name} (1800 sqft baseline: ${baseline_1800:,.0f})")
+            assumptions_list.append(f"Size tier: {size_tier} - Rate: ${rent_per_sqft}/sqft")
+            assumptions_list.append(f"Primary estimate: ${base_rent:,.0f} ({sqft} sqft × ${rent_per_sqft}/sqft)")
 
             # Price-based as secondary validation
             rent_price = purchase_price * 0.0085
