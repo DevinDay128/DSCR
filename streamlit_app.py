@@ -301,7 +301,8 @@ if calculate_clicked:
                 'down_payment_percent': down_payment_percent / 100,
                 'interest_rate_annual': interest_rate / 100,
                 'term_years': term_years,
-                'insurance_monthly': insurance_monthly
+                'insurance_monthly': insurance_monthly,
+                'hoa_monthly': hoa_monthly
             }
 
             # Optional parameters
