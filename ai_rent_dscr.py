@@ -511,20 +511,21 @@ class AIRentDSCRCalculator:
 
         if sqft is not None and sqft > 0:
             # Tiered base rates by property size
+            # Calibrated to real SC market: 1800 sqft in Myrtle Beach ≈ $2,200/mo
             if sqft < 1000:
-                base_rate = 1.60  # Small properties (studios, 1-beds)
+                base_rate = 1.34  # Small properties (studios, 1-beds)
                 size_tier = "Small (<1000 sqft)"
             elif sqft < 1500:
-                base_rate = 1.45  # Typical 2-bed
+                base_rate = 1.21  # Typical 2-bed
                 size_tier = "Medium (1000-1500 sqft)"
             elif sqft < 2000:
-                base_rate = 1.35  # Typical 3-bed
+                base_rate = 1.13  # Typical 3-bed
                 size_tier = "Standard (1500-2000 sqft)"
             elif sqft < 2500:
-                base_rate = 1.20  # Larger 4-bed
+                base_rate = 1.00  # Larger 4-bed
                 size_tier = "Large (2000-2500 sqft)"
             else:
-                base_rate = 1.05  # Very large homes
+                base_rate = 0.88  # Very large homes
                 size_tier = "Very Large (>2500 sqft)"
 
             assumptions_list.append(f"Size tier: {size_tier} - Base ${base_rate}/sqft")
@@ -534,14 +535,15 @@ class AIRentDSCRCalculator:
             neighborhood_name = "Base SC market"
 
             # SC Neighborhood adjustments (multiplied against base rate)
-            if any(area in address_upper for area in ['MYRTLE BEACH', 'NORTH MYRTLE', 'SURFSIDE']):
-                neighborhood_multiplier = 1.18  # +18% for Myrtle Beach
-                neighborhood_name = "Myrtle Beach area"
+            # Recalibrated to match real market rents
+            if any(area in address_upper for area in ['MYRTLE BEACH', 'NORTH MYRTLE', 'SURFSIDE', 'LITTLE RIVER']):
+                neighborhood_multiplier = 1.08  # +8% for Myrtle Beach area
+                neighborhood_name = "Myrtle Beach/Little River area"
             elif any(area in address_upper for area in ['HILTON HEAD', 'KIAWAH', 'ISLE OF PALMS']):
-                neighborhood_multiplier = 1.25  # +25% for luxury coastal
+                neighborhood_multiplier = 1.15  # +15% for luxury coastal
                 neighborhood_name = "Luxury coastal"
             elif any(area in address_upper for area in ['CHARLESTON', 'MOUNT PLEASANT', 'DANIEL ISLAND']):
-                neighborhood_multiplier = 1.11  # +11% for Charleston metro
+                neighborhood_multiplier = 1.06  # +6% for Charleston metro
                 neighborhood_name = "Charleston metro"
             elif any(area in address_upper for area in ['COLUMBIA', 'LEXINGTON', 'IRMO']):
                 neighborhood_multiplier = 0.96  # -4% for Columbia
