@@ -3,412 +3,227 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Rent & DSCR Calculator</title>
+    <title>Outgrow Showroom - Elite Real Estate Marketing</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>🏠 AI Rent & DSCR Calculator</h1>
-            <p class="subtitle">Estimate rental income and analyze investment property performance</p>
-        </header>
-
-        <div class="warning-banner">
-            ⚠️ <strong>Important:</strong> This tool provides rough AI estimates for screening purposes only.
-            Always verify with professional appraisals and local market research.
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-content">
+                <div class="logo">Outgrow Showroom</div>
+                <ul class="nav-links">
+                    <li><a href="#home">Home</a></li>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#results">Results</a></li>
+                    <li><a href="#contact" class="nav-cta">Get Started</a></li>
+                </ul>
+            </div>
         </div>
+    </nav>
 
-        <form id="calculatorForm">
-            <!-- Property Information -->
-            <section class="form-section">
-                <h2>📍 Property Information</h2>
-                <div class="form-group">
-                    <label for="address">Property Address *</label>
-                    <input type="text" id="address" name="address" required
-                           placeholder="Myrtle Beach, SC or Charleston, SC"
-                           title="Address must include South Carolina city/county for automatic tax calculation">
-                </div>
-                <div class="form-group">
-                    <label for="purchase_price">Purchase Price *</label>
-                    <input type="number" id="purchase_price" name="purchase_price" required
-                           placeholder="400000" min="0" step="1000">
-                </div>
-            </section>
-
-            <!-- Property Details -->
-            <section class="form-section">
-                <h2>🏡 Property Details (Optional)</h2>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="property_type">Property Type</label>
-                        <select id="property_type" name="property_type">
-                            <option value="">Select...</option>
-                            <option value="SFR">Single Family</option>
-                            <option value="Condo">Condo</option>
-                            <option value="Townhouse">Townhouse</option>
-                            <option value="Duplex">Duplex</option>
-                            <option value="Multi-family">Multi-family</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="beds">Bedrooms</label>
-                        <input type="number" id="beds" name="beds" placeholder="3" min="0" step="1">
-                    </div>
-                    <div class="form-group">
-                        <label for="baths">Bathrooms</label>
-                        <input type="number" id="baths" name="baths" placeholder="2" min="0" step="0.5">
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="sqft">Square Feet</label>
-                        <input type="number" id="sqft" name="sqft" placeholder="1800" min="0" step="100">
-                    </div>
-                    <div class="form-group">
-                        <label for="condition">Condition</label>
-                        <select id="condition" name="condition">
-                            <option value="">Select...</option>
-                            <option value="Excellent">Excellent</option>
-                            <option value="Good">Good</option>
-                            <option value="Average">Average</option>
-                            <option value="Fair">Fair</option>
-                            <option value="Poor">Poor</option>
-                            <option value="Fixer">Fixer / Needs Work</option>
-                        </select>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Loan Terms -->
-            <section class="form-section">
-                <h2>💰 Loan Terms</h2>
-                <div class="form-group">
-                    <label>Down Payment</label>
-                    <div class="radio-group">
-                        <label>
-                            <input type="radio" name="down_payment_type" value="percent" checked>
-                            Percentage
-                        </label>
-                        <label>
-                            <input type="radio" name="down_payment_type" value="amount">
-                            Dollar Amount
-                        </label>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group" id="down_percent_group">
-                        <label for="down_payment_percent">Down Payment %</label>
-                        <input type="number" id="down_payment_percent" name="down_payment_percent"
-                               placeholder="20" min="0" max="100" step="0.1">
-                    </div>
-                    <div class="form-group" id="down_amount_group" style="display: none;">
-                        <label for="down_payment_amount">Down Payment $</label>
-                        <input type="number" id="down_payment_amount" name="down_payment_amount"
-                               placeholder="80000" min="0" step="1000">
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="interest_rate_annual">Interest Rate %</label>
-                        <input type="number" id="interest_rate_annual" name="interest_rate_annual"
-                               placeholder="7.0" min="0" max="20" step="0.01" value="7.0">
-                    </div>
-                    <div class="form-group">
-                        <label for="term_years">Loan Term (years)</label>
-                        <input type="number" id="term_years" name="term_years"
-                               placeholder="30" min="1" max="40" step="1" value="30">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" id="interest_only" name="interest_only">
-                        Interest-Only Loan
-                    </label>
-                </div>
-            </section>
-
-            <!-- Expense Assumptions -->
-            <section class="form-section">
-                <h2>📊 Expense Assumptions</h2>
-                <p class="section-note">💡 Expenses calculated: <strong>P&I (Principal & Interest), Property Taxes (automatic from county millage), and Insurance only</strong></p>
-                <p class="section-note" style="color: #059669; font-weight: 600;">🏛️ Property taxes are calculated automatically using official county millage rates. No manual input needed!</p>
-                <div class="form-group">
-                    <label for="insurance_monthly">Insurance ($/month, default $150)</label>
-                    <input type="number" id="insurance_monthly" name="insurance_monthly"
-                           placeholder="150" min="0" step="10">
-                    <small>Monthly homeowners insurance cost. Get actual quote for accuracy.</small>
-                </div>
-                <div class="warning-note">
-                    ⚠️ Note: This calculator does NOT include maintenance, property management, HOA, utilities, or other operating expenses. Actual cashflow will be lower.
-                </div>
-            </section>
-
-            <button type="submit" class="btn-calculate">Calculate DSCR</button>
-        </form>
-
-        <!-- Results Section -->
-        <div id="results" class="results" style="display: none;">
-            <h2>📈 Analysis Results</h2>
-
-            <div class="result-card">
-                <div class="result-header">
-                    <h3>🏠 <span id="result_address"></span></h3>
-                    <div class="risk-badge" id="risk_badge"></div>
-                </div>
-
-                <div class="metrics-grid">
-                    <div class="metric">
-                        <label>Estimated Monthly Rent</label>
-                        <div class="metric-value">$<span id="estimated_rent"></span></div>
-                        <div class="metric-range">Range: $<span id="low_rent"></span> - $<span id="high_rent"></span></div>
-                        <div class="confidence">Confidence: <span id="confidence"></span>%</div>
-                    </div>
-
-                    <div class="metric highlight">
-                        <label>DSCR</label>
-                        <div class="metric-value large" id="dscr_value"></div>
-                    </div>
-
-                    <div class="metric">
-                        <label>Monthly Cashflow</label>
-                        <div class="metric-value" id="cashflow_value"></div>
-                    </div>
-                </div>
-
-                <div class="financial-details">
-                    <h4>💰 Financial Details</h4>
-                    <table>
-                        <tr>
-                            <td><strong>Purchase & Financing</strong></td>
-                            <td></td>
-                        </tr>
-                        <tr>
-                            <td>Purchase Price:</td>
-                            <td class="text-right">$<span id="purchase_price_result"></span></td>
-                        </tr>
-                        <tr>
-                            <td>Down Payment:</td>
-                            <td class="text-right">$<span id="down_payment_result"></span> (<span id="down_percent_result"></span>%)</td>
-                        </tr>
-                        <tr>
-                            <td>Loan Amount:</td>
-                            <td class="text-right">$<span id="loan_amount_result"></span></td>
-                        </tr>
-                        <tr><td colspan="2"><hr style="margin: 10px 0;"></td></tr>
-                        <tr>
-                            <td><strong>Monthly Expenses</strong></td>
-                            <td></td>
-                        </tr>
-                        <tr>
-                            <td>Property Taxes:</td>
-                            <td class="text-right">$<span id="property_tax_monthly_result"></span></td>
-                        </tr>
-                        <tr>
-                            <td>Insurance:</td>
-                            <td class="text-right">$<span id="insurance_monthly_result"></span></td>
-                        </tr>
-                        <tr>
-                            <td>P&I (Debt Service):</td>
-                            <td class="text-right">$<span id="monthly_debt_result"></span></td>
-                        </tr>
-                        <tr>
-                            <td><strong>Total Monthly Expenses:</strong></td>
-                            <td class="text-right"><strong>$<span id="total_monthly_expenses"></span></strong></td>
-                        </tr>
-                        <tr><td colspan="2"><hr style="margin: 10px 0;"></td></tr>
-                        <tr>
-                            <td><strong>DSCR Calculation</strong></td>
-                            <td></td>
-                        </tr>
-                        <tr>
-                            <td>Annual NOI:</td>
-                            <td class="text-right">$<span id="noi_annual_result"></span></td>
-                        </tr>
-                        <tr>
-                            <td>Annual Debt Service:</td>
-                            <td class="text-right">$<span id="annual_debt_result"></span></td>
-                        </tr>
-                        <tr>
-                            <td><strong>DSCR Ratio:</strong></td>
-                            <td class="text-right"><strong><span id="dscr_table"></span></strong></td>
-                        </tr>
-                    </table>
-                </div>
-
-                <!-- SC Tax Calculation Details (if applicable) -->
-                <div id="sc_tax_details" class="sc-tax-box" style="display: none;">
-                    <h4>🏛️ South Carolina Tax Calculation</h4>
-                    <p><strong>County:</strong> <span id="sc_county_name"></span></p>
-                    <p><strong>Method:</strong> Automatic calculation using SC millage rates</p>
-                    <table style="margin-top: 10px;">
-                        <tr>
-                            <td>Assessment Ratio (Rental):</td>
-                            <td class="text-right"><span id="sc_assessment_ratio"></span>%</td>
-                        </tr>
-                        <tr>
-                            <td>Millage Rate:</td>
-                            <td class="text-right"><span id="sc_millage_rate"></span></td>
-                        </tr>
-                        <tr>
-                            <td>Taxable Value:</td>
-                            <td class="text-right">$<span id="sc_taxable_value"></span></td>
-                        </tr>
-                        <tr>
-                            <td><strong>Annual Taxes:</strong></td>
-                            <td class="text-right"><strong>$<span id="sc_annual_taxes"></span></strong></td>
-                        </tr>
-                    </table>
-                    <p style="margin-top: 10px; font-size: 0.9em; color: #059669;">
-                        ✓ Taxes calculated automatically for South Carolina rental properties using official 2024 county millage rates.
-                    </p>
-                </div>
-
-                <div class="summary-box">
-                    <h4>Summary</h4>
-                    <p id="human_summary"></p>
-                </div>
-
-                <div class="assumptions-box">
-                    <h4>Assumptions Made</h4>
-                    <p id="assumptions"></p>
-                </div>
-
-                <div class="notes-box">
-                    <h4>📝 Notes for Investor</h4>
-                    <p id="notes"></p>
-                </div>
-
-                <div class="disclaimer-box">
-                    <h4>⚠️ Disclaimer</h4>
-                    <p id="disclaimer"></p>
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1 class="hero-title">Elevate Your Real Estate Success</h1>
+                <p class="hero-subtitle">Partner with the marketing experts who move $10M+ in real estate monthly</p>
+                <div class="hero-cta">
+                    <a href="#contact" class="btn btn-primary">Start Growing Today</a>
+                    <a href="#results" class="btn btn-secondary">See Our Results</a>
                 </div>
             </div>
         </div>
-    </div>
+        <div class="hero-overlay"></div>
+    </section>
 
-    <script>
-        // Toggle down payment input fields
-        document.querySelectorAll('input[name="down_payment_type"]').forEach(radio => {
-            radio.addEventListener('change', function() {
-                if (this.value === 'percent') {
-                    document.getElementById('down_percent_group').style.display = 'block';
-                    document.getElementById('down_amount_group').style.display = 'none';
-                    document.getElementById('down_payment_amount').value = '';
-                } else {
-                    document.getElementById('down_percent_group').style.display = 'none';
-                    document.getElementById('down_amount_group').style.display = 'block';
-                    document.getElementById('down_payment_percent').value = '';
-                }
-            });
-        });
+    <!-- Stats Bar -->
+    <section class="stats-bar">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number">$10M+</div>
+                    <div class="stat-label">Monthly Sales Volume</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">12+</div>
+                    <div class="stat-label">Partner Agents</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">2 Years</div>
+                    <div class="stat-label">Proven Track Record</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">100%</div>
+                    <div class="stat-label">Results-Driven</div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-        // Handle form submission
-        document.getElementById('calculatorForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
+    <!-- About Section -->
+    <section id="about" class="about-section">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Why Top Agents Choose Us</h2>
+                <p class="section-subtitle">Success-oriented marketing that delivers measurable results</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📈</div>
+                    <h3 class="feature-title">Proven Results</h3>
+                    <p class="feature-description">We consistently move $10M+ in real estate monthly, demonstrating our ability to drive serious results for our partners.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🤝</div>
+                    <h3 class="feature-title">Trusted Partnership</h3>
+                    <p class="feature-description">Over a dozen agents trust us with their marketing. Join a network of successful professionals who've grown with us.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💡</div>
+                    <h3 class="feature-title">Strategic Approach</h3>
+                    <p class="feature-description">Data-driven strategies tailored to your unique market and goals. We don't do cookie-cutter solutions.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <h3 class="feature-title">Target Precision</h3>
+                    <p class="feature-description">Reach the right buyers and sellers at the right time with campaigns optimized for maximum ROI.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3 class="feature-title">Fast Execution</h3>
+                    <p class="feature-description">Quick turnaround times mean your listings get the attention they deserve when it matters most.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3 class="feature-title">Transparent Reporting</h3>
+                    <p class="feature-description">Clear metrics and regular updates keep you informed about your marketing performance and ROI.</p>
+                </div>
+            </div>
+        </div>
+    </section>
 
-            // Gather form data
-            const formData = {
-                address: document.getElementById('address').value,
-                purchase_price: document.getElementById('purchase_price').value,
-                down_payment_type: document.querySelector('input[name="down_payment_type"]:checked').value,
-                down_payment_percent: document.getElementById('down_payment_percent').value,
-                down_payment_amount: document.getElementById('down_payment_amount').value,
-                interest_rate_annual: document.getElementById('interest_rate_annual').value,
-                term_years: document.getElementById('term_years').value,
-                interest_only: document.getElementById('interest_only').checked ? 'true' : 'false',
-                property_type: document.getElementById('property_type').value,
-                beds: document.getElementById('beds').value,
-                baths: document.getElementById('baths').value,
-                sqft: document.getElementById('sqft').value,
-                condition: document.getElementById('condition').value,
-                insurance_monthly: document.getElementById('insurance_monthly').value
-            };
+    <!-- Results Section -->
+    <section id="results" class="results-section">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Real Results, Real Growth</h2>
+                <p class="section-subtitle">Our track record speaks for itself</p>
+            </div>
+            <div class="results-content">
+                <div class="result-highlight">
+                    <div class="result-icon">🏆</div>
+                    <h3>Consistent Performance</h3>
+                    <p>Nearly 2 years of proven success in the real estate marketing space, with continuous growth and expanding partnerships.</p>
+                </div>
+                <div class="result-highlight">
+                    <div class="result-icon">💼</div>
+                    <h3>Agent Success Stories</h3>
+                    <p>Our partner agents have seen significant increases in lead quality, conversion rates, and overall sales volume.</p>
+                </div>
+                <div class="result-highlight">
+                    <div class="result-icon">🚀</div>
+                    <h3>Scalable Solutions</h3>
+                    <p>Whether you're a solo agent or leading a team, our marketing strategies scale with your ambitions.</p>
+                </div>
+            </div>
+        </div>
+    </section>
 
-            try {
-                const response = await fetch('/calculate', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(formData)
-                });
+    <!-- Contact Form Section -->
+    <section id="contact" class="contact-section">
+        <div class="container">
+            <div class="contact-wrapper">
+                <div class="contact-info">
+                    <h2 class="contact-title">Ready to Grow Your Business?</h2>
+                    <p class="contact-description">Join the agents who are already experiencing breakthrough results. Fill out the form and let's discuss how we can help you reach your goals.</p>
+                    <div class="contact-benefits">
+                        <div class="benefit-item">
+                            <span class="check-icon">✓</span>
+                            <span>Free strategy consultation</span>
+                        </div>
+                        <div class="benefit-item">
+                            <span class="check-icon">✓</span>
+                            <span>Customized marketing plan</span>
+                        </div>
+                        <div class="benefit-item">
+                            <span class="check-icon">✓</span>
+                            <span>No long-term commitments</span>
+                        </div>
+                        <div class="benefit-item">
+                            <span class="check-icon">✓</span>
+                            <span>Proven track record of success</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="contact-form-container">
+                    <form id="contactForm" class="contact-form">
+                        <div class="form-group">
+                            <label for="name">Full Name *</label>
+                            <input type="text" id="name" name="name" required placeholder="John Smith">
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email Address *</label>
+                            <input type="email" id="email" name="email" required placeholder="john@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">Phone Number *</label>
+                            <input type="tel" id="phone" name="phone" required placeholder="(555) 123-4567">
+                        </div>
+                        <div class="form-group">
+                            <label for="company">Brokerage/Company</label>
+                            <input type="text" id="company" name="company" placeholder="Your Brokerage Name">
+                        </div>
+                        <div class="form-group">
+                            <label for="volume">Annual Sales Volume</label>
+                            <select id="volume" name="volume">
+                                <option value="">Select...</option>
+                                <option value="0-1m">$0 - $1M</option>
+                                <option value="1-5m">$1M - $5M</option>
+                                <option value="5-10m">$5M - $10M</option>
+                                <option value="10m+">$10M+</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="message">Tell Us About Your Goals *</label>
+                            <textarea id="message" name="message" rows="4" required placeholder="What are your biggest marketing challenges? What goals do you want to achieve?"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-submit">Get Started Now</button>
+                        <p class="form-note">We'll respond within 24 hours to schedule your consultation.</p>
+                    </form>
+                    <div id="formSuccess" class="form-success" style="display: none;">
+                        <div class="success-icon">✓</div>
+                        <h3>Thank You!</h3>
+                        <p>We've received your information and will be in touch within 24 hours to discuss how we can help you grow.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-                const data = await response.json();
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <h3>Outgrow Showroom</h3>
+                    <p>Elite real estate marketing for success-driven agents</p>
+                </div>
+                <div class="footer-stats">
+                    <p><strong>$10M+</strong> in monthly sales</p>
+                    <p><strong>12+</strong> partner agents</p>
+                    <p><strong>2 years</strong> of proven results</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Outgrow Showroom. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
 
-                if (data.success) {
-                    displayResults(data.result);
-                } else {
-                    alert('Error: ' + data.error);
-                }
-            } catch (error) {
-                alert('Error calculating results: ' + error);
-            }
-        });
-
-        function displayResults(result) {
-            // Show results section
-            document.getElementById('results').style.display = 'block';
-            document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
-
-            // Set risk badge
-            const riskBadge = document.getElementById('risk_badge');
-            riskBadge.textContent = result.risk_label;
-            riskBadge.className = 'risk-badge ' + result.risk_label.toLowerCase();
-
-            // Populate values
-            document.getElementById('result_address').textContent = result.address;
-            document.getElementById('estimated_rent').textContent = formatNumber(result.estimated_monthly_rent);
-            document.getElementById('low_rent').textContent = formatNumber(result.low_estimate_rent);
-            document.getElementById('high_rent').textContent = formatNumber(result.high_estimate_rent);
-            document.getElementById('confidence').textContent = Math.round(result.confidence_score * 100);
-
-            document.getElementById('dscr_value').textContent = result.DSCR.toFixed(2);
-
-            const cashflow = result.monthly_cashflow;
-            const cashflowEl = document.getElementById('cashflow_value');
-            cashflowEl.textContent = (cashflow >= 0 ? '+' : '') + '$' + formatNumber(Math.abs(cashflow));
-            cashflowEl.style.color = cashflow >= 0 ? '#10b981' : '#ef4444';
-
-            document.getElementById('purchase_price_result').textContent = formatNumber(result.purchase_price);
-            document.getElementById('down_payment_result').textContent = formatNumber(result.down_payment_amount);
-            document.getElementById('down_percent_result').textContent = Math.round(result.down_payment_percent * 100);
-            document.getElementById('loan_amount_result').textContent = formatNumber(result.loan_amount);
-
-            // Expense breakdown
-            document.getElementById('property_tax_monthly_result').textContent = formatNumber(result.property_tax_monthly);
-            document.getElementById('insurance_monthly_result').textContent = formatNumber(result.insurance_monthly);
-            document.getElementById('monthly_debt_result').textContent = formatNumber(result.monthly_debt_service);
-
-            // Total monthly expenses
-            const totalExpenses = result.property_tax_monthly + result.insurance_monthly + result.monthly_debt_service;
-            document.getElementById('total_monthly_expenses').textContent = formatNumber(totalExpenses);
-
-            // DSCR calculations
-            document.getElementById('noi_annual_result').textContent = formatNumber(result.NOI_annual);
-            document.getElementById('annual_debt_result').textContent = formatNumber(result.annual_debt_service);
-            document.getElementById('dscr_table').textContent = result.DSCR.toFixed(2);
-
-            // SC Tax Calculation Details (if applicable)
-            if (result.sc_tax_calculation && result.sc_tax_calculation.tax_accuracy === 'ok') {
-                document.getElementById('sc_tax_details').style.display = 'block';
-                document.getElementById('sc_county_name').textContent = result.sc_tax_calculation.county_name;
-                document.getElementById('sc_assessment_ratio').textContent = (result.sc_tax_calculation.assessment_ratio * 100).toFixed(1);
-                document.getElementById('sc_millage_rate').textContent = result.sc_tax_calculation.millage_rate.toFixed(3);
-                document.getElementById('sc_taxable_value').textContent = formatNumber(result.sc_tax_calculation.taxable_value);
-                document.getElementById('sc_annual_taxes').textContent = formatNumber(result.sc_tax_calculation.annual_taxes);
-            } else {
-                document.getElementById('sc_tax_details').style.display = 'none';
-            }
-
-            document.getElementById('human_summary').textContent = result.human_summary;
-            document.getElementById('assumptions').textContent = result.assumptions;
-            document.getElementById('notes').textContent = result.notes_for_investor;
-            document.getElementById('disclaimer').textContent = result.disclaimer;
-        }
-
-        function formatNumber(num) {
-            return Math.round(num).toLocaleString();
-        }
-    </script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
