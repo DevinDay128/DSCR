@@ -99,192 +99,71 @@ except:
 st.title("DSCR Calculator")
 st.caption("Powered by BrickWood Mortgage")
 
-st.divider()
+# Compact inputs in grid layout
+st.markdown("---")
 
-# REQUIRED INPUTS
-st.markdown("### Required Inputs")
-
-col1, col2 = st.columns(2)
-
+# ROW 1: Main property info
+col1, col2, col3 = st.columns(3)
 with col1:
     address = st.text_input(
         "Property Address",
-        placeholder="123 Ocean Blvd, Myrtle Beach, SC 29577",
-        help="Address must include South Carolina city/county for automatic tax calculation",
-        label_visibility="visible"
+        placeholder="123 Ocean Blvd, Myrtle Beach, SC",
+        help="SC address for automatic tax calculation"
     )
+with col2:
+    purchase_price = st.number_input("Purchase Price", min_value=0, value=400000, step=10000, format="%d")
+with col3:
+    sqft = st.number_input("Square Feet", min_value=0, value=1800, step=100)
 
-    purchase_price = st.number_input(
-        "Purchase Price",
-        min_value=0,
-        value=400000,
-        step=10000,
-        format="%d"
-    )
+# ROW 2: Loan terms
+col1, col2, col3 = st.columns(3)
+with col1:
+    down_payment_percent = st.slider("Down Payment (%)", min_value=0, max_value=40, value=20, step=1)
+with col2:
+    interest_rate = st.number_input("Interest Rate (%)", min_value=0.0, max_value=20.0, value=7.0, step=0.1, format="%.1f")
+with col3:
+    term_years = st.number_input("Loan Term (Years)", min_value=1, max_value=40, value=30, step=1)
 
-    hoa_monthly = st.number_input(
-        "Monthly HOA",
-        min_value=0,
-        value=0,
-        step=50,
-        format="%d"
-    )
+# ROW 3: Additional property details
+col1, col2, col3 = st.columns(3)
+with col1:
+    hoa_monthly = st.number_input("Monthly HOA", min_value=0, value=0, step=50, format="%d")
+with col2:
+    beds = st.number_input("Bedrooms", min_value=0, value=3, step=1, help="Improves rent estimate")
+with col3:
+    baths = st.number_input("Bathrooms", min_value=0.0, value=2.0, step=0.5, help="Improves rent estimate")
+
+st.markdown("---")
+
+# COMPACT TOGGLES GRID
+st.markdown("##### Auto/Manual Settings")
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.markdown("**Insurance**")
+    insurance_mode = st.radio("", ["Auto ($150)", "Manual"], horizontal=True, label_visibility="collapsed", key="ins")
+    if insurance_mode == "Manual":
+        insurance_monthly = st.number_input("Amount", min_value=0, value=150, step=10, key="ins_amt")
+    else:
+        insurance_monthly = 150
 
 with col2:
-    sqft = st.number_input(
-        "Square Feet",
-        min_value=0,
-        value=1800,
-        step=100,
-        help="Required for accurate rent estimation"
-    )
+    st.markdown("**Rent Estimate**")
+    rent_mode = st.radio("", ["Auto", "Manual"], horizontal=True, label_visibility="collapsed", key="rent")
+    if rent_mode == "Manual":
+        manual_rent = st.number_input("Amount", min_value=0, value=2500, step=50, key="rent_amt")
+    else:
+        manual_rent = None
 
-    down_payment_percent = st.slider(
-        "Down Payment (%)",
-        min_value=0,
-        max_value=40,
-        value=20,
-        step=1
-    )
-    st.caption(f"{down_payment_percent}%")
+with col3:
+    st.markdown("**Property Taxes**")
+    tax_mode = st.radio("", ["Auto", "Manual"], horizontal=True, label_visibility="collapsed", key="tax")
+    if tax_mode == "Manual":
+        manual_taxes = st.number_input("Annual", min_value=0, value=5000, step=100, key="tax_amt")
+    else:
+        manual_taxes = None
 
-    interest_rate = st.number_input(
-        "Interest Rate (%)",
-        min_value=0.0,
-        max_value=20.0,
-        value=7.0,
-        step=0.1,
-        format="%.1f"
-    )
-
-    term_years = st.number_input(
-        "Loan Term (Years)",
-        min_value=1,
-        max_value=40,
-        value=30,
-        step=1
-    )
-
-st.divider()
-
-# OPTIONAL INPUTS (Collapsed)
-with st.expander("📝 Optional inputs (improve accuracy)"):
-    col1, col2 = st.columns(2)
-
-    with col1:
-        beds = st.number_input(
-            "Bedrooms (optional)",
-            min_value=0,
-            value=0,
-            step=1
-        )
-        st.caption("Optional — improves rent estimate")
-
-        baths = st.number_input(
-            "Bathrooms (optional)",
-            min_value=0.0,
-            value=0.0,
-            step=0.5
-        )
-        st.caption("Optional — improves rent estimate")
-
-    with col2:
-        property_type = st.selectbox(
-            "Property Type (optional)",
-            ["", "Single Family", "Condo", "Townhome", "Multi-Family"]
-        )
-
-st.divider()
-
-# INSURANCE SECTION
-st.markdown("### Insurance")
-
-insurance_mode = st.radio(
-    "",
-    ["Default ($150/month)", "Custom Amount"],
-    horizontal=True,
-    label_visibility="collapsed",
-    key="insurance_toggle"
-)
-
-if insurance_mode == "Custom Amount":
-    insurance_monthly = st.number_input(
-        "Monthly Insurance",
-        min_value=0,
-        value=150,
-        step=10
-    )
-    st.caption("Enter your custom insurance amount")
-else:
-    insurance_monthly = 150
-    st.caption("Default: $150/month")
-
-st.divider()
-
-# RENT SECTION
-st.markdown("### Rent Estimate *")
-
-rent_mode = st.radio(
-    "",
-    ["Auto Estimate", "Manual Rent"],
-    horizontal=True,
-    label_visibility="collapsed"
-)
-
-if rent_mode == "Manual Rent":
-    manual_rent = st.number_input(
-        "Monthly Rent",
-        min_value=0,
-        value=3000,
-        step=50
-    )
-    st.caption("You're overriding the automatic estimate")
-else:
-    manual_rent = None
-    if st.session_state.result:
-        est_rent = st.session_state.result.get('estimated_monthly_rent', 0)
-        st.number_input(
-            "Estimated Rent",
-            value=float(est_rent),
-            disabled=True
-        )
-    st.caption("Automatically estimated. Toggle to enter your own rent")
-
-st.divider()
-
-# TAXES SECTION
-st.markdown("### Property Taxes *")
-
-tax_mode = st.radio(
-    "",
-    ["Auto Estimate", "Manual"],
-    horizontal=True,
-    label_visibility="collapsed",
-    key="tax_toggle"
-)
-
-if tax_mode == "Manual":
-    manual_taxes = st.number_input(
-        "Annual Taxes",
-        min_value=0,
-        value=5000,
-        step=100
-    )
-    if st.session_state.result:
-        suggested = st.session_state.result.get('property_tax_annual', 0)
-        st.caption(f"Suggested: ${suggested:,.0f}")
-else:
-    manual_taxes = None
-    if st.session_state.result:
-        auto_tax = st.session_state.result.get('property_tax_annual', 0)
-        st.number_input(
-            "Annual Taxes",
-            value=float(auto_tax),
-            disabled=True
-        )
-    st.caption("Calculated automatically from county data")
-
-st.divider()
+st.markdown("---")
 
 # CALCULATE BUTTON
 calculate_clicked = st.button("Calculate DSCR", type="primary", use_container_width=True)
@@ -294,6 +173,9 @@ if calculate_clicked:
         st.error("Please enter a property address")
     else:
         try:
+            # Property type not collected in compact UI
+            property_type = None
+
             # Build parameters
             params = {
                 'address': address,
