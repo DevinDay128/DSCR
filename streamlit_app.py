@@ -102,20 +102,40 @@ st.caption("Powered by BrickWood Mortgage")
 # Compact inputs in grid layout
 st.markdown("---")
 
-# ROW 1: Main property info
-col1, col2, col3 = st.columns(3)
+# ROW 1: Address fields (3 separate boxes)
+col1, col2, col3 = st.columns([2, 1, 1])
 with col1:
-    address = st.text_input(
-        "Property Address",
-        placeholder="123 Ocean Blvd, Myrtle Beach, SC",
-        help="SC address for automatic tax calculation"
+    address_street = st.text_input(
+        "Street Address",
+        placeholder="123 Ocean Blvd",
+        help="Property street address"
     )
 with col2:
-    purchase_price = st.number_input("Purchase Price", min_value=0, value=400000, step=10000, format="%d")
+    address_city = st.text_input(
+        "City",
+        placeholder="Myrtle Beach",
+        help="SC city for tax calculation"
+    )
 with col3:
-    sqft = st.number_input("Square Feet", min_value=0, value=1800, step=100)
+    address_zip = st.text_input(
+        "Zip Code",
+        placeholder="29577",
+        help="South Carolina zip code"
+    )
 
-# ROW 2: Loan terms
+# Combine address fields
+address = f"{address_street}, {address_city}, SC {address_zip}".strip(", ")
+
+# ROW 2: Property details
+col1, col2, col3 = st.columns(3)
+with col1:
+    purchase_price = st.number_input("Purchase Price", min_value=0, value=400000, step=10000, format="%d")
+with col2:
+    sqft = st.number_input("Square Feet", min_value=0, value=1800, step=100)
+with col3:
+    hoa_monthly = st.number_input("Monthly HOA", min_value=0, value=0, step=50, format="%d")
+
+# ROW 3: Loan terms
 col1, col2, col3 = st.columns(3)
 with col1:
     down_payment_percent = st.slider("Down Payment (%)", min_value=0, max_value=40, value=20, step=1)
@@ -123,15 +143,6 @@ with col2:
     interest_rate = st.number_input("Interest Rate (%)", min_value=0.0, max_value=20.0, value=7.0, step=0.1, format="%.1f")
 with col3:
     term_years = st.number_input("Loan Term (Years)", min_value=1, max_value=40, value=30, step=1)
-
-# ROW 3: Additional property details
-col1, col2, col3 = st.columns(3)
-with col1:
-    hoa_monthly = st.number_input("Monthly HOA", min_value=0, value=0, step=50, format="%d")
-with col2:
-    beds = st.number_input("Bedrooms", min_value=0, value=3, step=1, help="Improves rent estimate")
-with col3:
-    baths = st.number_input("Bathrooms", min_value=0.0, value=2.0, step=0.5, help="Improves rent estimate")
 
 st.markdown("---")
 
@@ -173,9 +184,6 @@ if calculate_clicked:
         st.error("Please enter a property address")
     else:
         try:
-            # Property type not collected in compact UI
-            property_type = None
-
             # Build parameters
             params = {
                 'address': address,
@@ -190,12 +198,6 @@ if calculate_clicked:
             # Optional parameters
             if sqft > 0:
                 params['sqft'] = int(sqft)
-            if beds > 0:
-                params['beds'] = int(beds)
-            if baths > 0:
-                params['baths'] = float(baths)
-            if property_type:
-                params['property_type'] = property_type
 
             # Calculate
             with st.spinner("Calculating..."):
