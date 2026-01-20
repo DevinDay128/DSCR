@@ -111,10 +111,10 @@ with col1:
         help="Property street address"
     )
 with col2:
-    address_city = st.text_input(
-        "City",
-        placeholder="Myrtle Beach",
-        help="SC city for tax calculation"
+    address_county = st.text_input(
+        "County",
+        placeholder="Horry",
+        help="SC county for tax calculation"
     )
 with col3:
     address_zip = st.text_input(
@@ -124,7 +124,7 @@ with col3:
     )
 
 # Combine address fields
-address = f"{address_street}, {address_city}, SC {address_zip}".strip(", ")
+address = f"{address_street}, {address_county} County, SC {address_zip}".strip(", ")
 
 # ROW 2: Property details
 col1, col2, col3 = st.columns(3)
@@ -238,10 +238,16 @@ if st.session_state.result:
 
     with col3:
         cashflow = result['monthly_cashflow']
-        st.metric(
-            label="Monthly Cashflow",
-            value=f"${abs(cashflow):,.0f}",
-            delta="Positive" if cashflow >= 0 else "Negative"
+        cashflow_color = "#28a745" if cashflow >= 0 else "#dc3545"  # green for positive, red for negative
+        cashflow_text = "Positive" if cashflow >= 0 else "Negative"
+
+        st.markdown(
+            f'<div style="text-align: left;">'
+            f'<p style="font-size: 0.875rem; margin-bottom: 0.25rem; color: #666;">Monthly Cashflow</p>'
+            f'<p style="font-size: 1.75rem; font-weight: 600; margin: 0; color: {cashflow_color};">${abs(cashflow):,.0f}</p>'
+            f'<p style="font-size: 0.875rem; margin-top: 0.25rem; color: {cashflow_color}; font-weight: 500;">{cashflow_text}</p>'
+            f'</div>',
+            unsafe_allow_html=True
         )
         st.caption("After mortgage, taxes, insurance, and HOA")
 
