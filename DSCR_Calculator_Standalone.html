@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DSCR Calculator | BrickWood Mortgage</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f8f9fa;
+      color: #1a1a1a;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1rem;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      text-align: center;
+      padding: 2rem 1rem;
+      margin-bottom: 2rem;
+      border-radius: 8px;
+    }
+
+    .header h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .header p {
+      opacity: 0.95;
+      font-size: 1rem;
+    }
+
+    .card {
+      background: white;
+      border-radius: 8px;
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: #667eea;
+    }
+
+    .input-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    label {
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      color: #333;
+      font-size: 0.9rem;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select {
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 1rem;
+      transition: border-color 0.2s;
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      margin-top: 0.5rem;
+    }
+
+    .toggle-group {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .toggle-btn {
+      padding: 0.5rem 1rem;
+      border: 1px solid #ddd;
+      background: white;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .toggle-btn.active {
+      background: #667eea;
+      color: white;
+      border-color: #667eea;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 1rem 2rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .result-card {
+      padding: 1.5rem;
+      border-radius: 8px;
+      background: #f8f9fa;
+      border: 1px solid #e0e0e0;
+    }
+
+    .result-label {
+      font-size: 0.875rem;
+      color: #666;
+      margin-bottom: 0.5rem;
+    }
+
+    .result-value {
+      font-size: 1.75rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .result-caption {
+      font-size: 0.8rem;
+      color: #888;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin-top: 0.5rem;
+    }
+
+    .badge-success {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .badge-warning {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .phone-button {
+      display: block;
+      text-align: center;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 1rem 2rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1.1rem;
+      margin: 2rem auto;
+      max-width: 400px;
+      transition: transform 0.2s;
+    }
+
+    .phone-button:hover {
+      transform: translateY(-2px);
+    }
+
+    .noi-section {
+      margin-top: 2rem;
+      padding-top: 2rem;
+      border-top: 2px solid #e0e0e0;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .divider {
+      border: 0;
+      height: 1px;
+      background: #e0e0e0;
+      margin: 1.5rem 0;
+    }
+
+    @media (max-width: 768px) {
+      .header h1 {
+        font-size: 1.5rem;
+      }
+
+      .input-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .results-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <h1>🏠 DSCR Investment Calculator</h1>
+      <p>Calculate Debt Service Coverage Ratio for South Carolina Properties</p>
+      <p style="font-size: 0.9rem; margin-top: 0.5rem;">Powered by BrickWood Mortgage</p>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Property Information</div>
+
+      <div class="input-grid">
+        <div class="input-group">
+          <label for="street">Street Address</label>
+          <input type="text" id="street" placeholder="123 Ocean Blvd">
+        </div>
+        <div class="input-group">
+          <label for="county">County</label>
+          <input type="text" id="county" placeholder="Horry">
+        </div>
+        <div class="input-group">
+          <label for="zip">Zip Code</label>
+          <input type="text" id="zip" placeholder="29577">
+        </div>
+      </div>
+
+      <div class="input-grid">
+        <div class="input-group">
+          <label for="price">Purchase Price ($)</label>
+          <input type="number" id="price" value="400000" step="10000">
+        </div>
+        <div class="input-group">
+          <label for="sqft">Square Feet</label>
+          <input type="number" id="sqft" value="1800" step="100">
+        </div>
+        <div class="input-group">
+          <label for="hoa">Monthly HOA ($)</label>
+          <input type="number" id="hoa" value="0" step="50">
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <div class="section-title">Loan Terms</div>
+
+      <div class="input-grid">
+        <div class="input-group">
+          <label for="downpayment">Down Payment (%)</label>
+          <input type="range" id="downpayment" min="0" max="40" value="20" step="1">
+          <div style="text-align: center; margin-top: 0.5rem; font-weight: 600;" id="downpayment-display">20%</div>
+        </div>
+        <div class="input-group">
+          <label for="interest">Interest Rate (%)</label>
+          <input type="number" id="interest" value="7.0" step="0.1" min="0" max="20">
+        </div>
+        <div class="input-group">
+          <label for="term">Loan Term (Years)</label>
+          <input type="number" id="term" value="30" step="1" min="1" max="40">
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <div class="section-title">Auto/Manual Settings</div>
+
+      <div class="input-grid">
+        <div class="input-group">
+          <label>Insurance</label>
+          <div class="toggle-group">
+            <button class="toggle-btn active" onclick="setInsuranceMode('auto')">Auto ($150)</button>
+            <button class="toggle-btn" onclick="setInsuranceMode('manual')">Manual</button>
+          </div>
+          <input type="number" id="insurance" value="150" step="25" class="hidden">
+        </div>
+        <div class="input-group">
+          <label>Rent Estimate</label>
+          <div class="toggle-group">
+            <button class="toggle-btn active" onclick="setRentMode('auto')">Auto</button>
+            <button class="toggle-btn" onclick="setRentMode('manual')">Manual</button>
+          </div>
+          <input type="number" id="manual-rent" value="2500" step="100" class="hidden">
+        </div>
+        <div class="input-group">
+          <label>Property Taxes</label>
+          <div class="toggle-group">
+            <button class="toggle-btn active" onclick="setTaxMode('auto')">Auto</button>
+            <button class="toggle-btn" onclick="setTaxMode('manual')">Manual</button>
+          </div>
+          <input type="number" id="manual-tax" value="5000" step="100" class="hidden" placeholder="Annual">
+        </div>
+      </div>
+
+      <button class="btn-primary" onclick="calculate()" style="margin-top: 1.5rem;">Calculate DSCR</button>
+    </div>
+
+    <div id="results" class="hidden">
+      <div class="card">
+        <div class="results-grid" id="results-content"></div>
+
+        <a href="tel:8433144104" class="phone-button">📞 Click here to get a quote from BrickWood Mortgage</a>
+
+        <div class="noi-section">
+          <button class="btn-primary" onclick="toggleNOI()" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+            📊 Calculate Additional Investment Metrics
+          </button>
+
+          <div id="noi-calculator" class="hidden" style="margin-top: 1.5rem;">
+            <div style="background: #d1ecf1; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; border-left: 4px solid #0c5460;">
+              <strong>What is NOI?</strong> This metric analyzes the cashflow of a property itself as if it had no mortgage.
+            </div>
+
+            <div class="input-grid">
+              <div class="input-group">
+                <label for="vacancy">Vacancy Rate (%)</label>
+                <input type="number" id="vacancy" value="5" step="0.5" min="0" max="100">
+              </div>
+              <div class="input-group">
+                <label for="maintenance">Maintenance Reserve (%)</label>
+                <input type="number" id="maintenance" value="10" step="0.5" min="0" max="100">
+              </div>
+              <div class="input-group">
+                <label for="utilities-mode">Who pays utilities?</label>
+                <select id="utilities-mode" onchange="updateUtilitiesInput()">
+                  <option value="tenant">Tenant pays utilities</option>
+                  <option value="owner">Owner pays utilities</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="input-group hidden" id="utilities-input-group">
+              <label for="utilities">Monthly Utilities ($)</label>
+              <input type="number" id="utilities" value="0" step="25">
+            </div>
+
+            <button class="btn-primary" onclick="calculateNOI()" style="margin-top: 1rem; background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+              Calculate NOI
+            </button>
+
+            <div id="noi-results" class="hidden" style="margin-top: 1.5rem;">
+              <div class="results-grid" id="noi-results-content"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ========================================
+    // SC RENTAL RATES DATA
+    // ========================================
+    const SC_RENTAL_RATES = {
+      "Hilton Head": { target_1800_sqft: 3600, tier_multipliers: {small: 1.19, medium: 1.09, standard: 1.0, large: 0.89, very_large: 0.78} },
+      "Kiawah": { target_1800_sqft: 3600, tier_multipliers: {small: 1.19, medium: 1.09, standard: 1.0, large: 0.89, very_large: 0.78} },
+      "Isle of Palms": { target_1800_sqft: 3600, tier_multipliers: {small: 1.19, medium: 1.09, standard: 1.0, large: 0.89, very_large: 0.78} },
+      "Seabrook": { target_1800_sqft: 3600, tier_multipliers: {small: 1.19, medium: 1.09, standard: 1.0, large: 0.89, very_large: 0.78} },
+      "Sullivans Island": { target_1800_sqft: 3500, tier_multipliers: {small: 1.19, medium: 1.09, standard: 1.0, large: 0.89, very_large: 0.78} },
+      "Fripp Island": { target_1800_sqft: 3200, tier_multipliers: {small: 1.19, medium: 1.09, standard: 1.0, large: 0.89, very_large: 0.78} },
+      "Daniel Island": { target_1800_sqft: 3400, tier_multipliers: {small: 1.19, medium: 1.09, standard: 1.0, large: 0.89, very_large: 0.78} },
+      "Charleston Downtown": { target_1800_sqft: 3400, tier_multipliers: {small: 1.19, medium: 1.09, standard: 1.0, large: 0.89, very_large: 0.78} },
+      "Charleston": { target_1800_sqft: 2800, tier_multipliers: {small: 1.19, medium: 1.09, standard: 1.0, large: 0.89, very_large: 0.78} },
+      "Mount Pleasant": { target_1800_sqft: 2700, tier_multipliers: {small: 1.19, medium: 1.09, standard: 1.0, large: 0.89, very_large: 0.78} },
+      "James Island": { target_1800_sqft: 2500, tier_multipliers: {small: 1.19, medium: 1.09, standard: 1.0, large: 0.89, very_large: 0.78} },
+      "West Ashley": { target_1800_sqft: 2300, tier_multipliers: {small: 1.19, medium: 1.09, standard: 1.0, large: 0.89, very_large: 0.78} },
+      "Summerville": { target_1800_sqft: 2200, tier_multipliers: {small: 1.19, medium: 1.09, standard: 1.0, large: 0.89, very_large: 0.78} },
+      "North Charleston": { target_1800_sqft: 2000, tier_multipliers: {small: 1.19, medium: 1.09, standard: 1.0, large: 0.89, very_large: 0.78} },
+      "Myrtle Beach": { target_1800_sqft: 2200, tier_multipliers: {small: 1.19, medium: 1.09, standard: 1.0, large: 0.89, very_large: 0.78} },
+      "North Myrtle Beach": { target_1800_sqft: 2250, tier_multipliers: {small: 1.19, medium: 1.09, standard: 1.0, large: 0.89, very_large: 0.78} },
+      "Little River": { target_1800_sqft: 2100, tier_multipliers: {small: 1.19, medium: 1.09, standard: 1.0, large: 0.89, very_large: 0.78} },
+      "Surfside Beach": { target_1800_sqft: 2100, tier_multipliers: {small: 1.19, medium: 1.09, standard: 1.0, large: 0.89, very_large: 0.78} },
+      "Surfside": { target_1800_sqft: 2100, tier_multipliers: {small: 1.19, medium: 1.09, standard: 1.0, large: 0.89, very_large: 0.78} },
+      "Murrells Inlet": { target_1800_sqft: 2150, tier_multipliers: {small: 1.19, medium: 1.09, standard: 1.0, large: 0.89, very_large: 0.78} },
+      "Pawleys Island": { target_1800_sqft: 2400, tier_multipliers: {small: 1.19, medium: 1.09, standard: 1.0, large: 0.89, very_large: 0.78} },
+      "Garden City": { target_1800_sqft: 2000, tier_multipliers: {small: 1.19, medium: 1.09, standard: 1.0, large: 0.89, very_large: 0.78} },
+      "Beaufort": { target_1800_sqft: 2300, tier_multipliers: {small: 1.19, medium: 1.09, standard: 1.0, large: 0.89, very_large: 0.78} },
+      "Edisto": { target_1800_sqft: 2200, tier_multipliers: {small: 1.19, medium: 1.09, standard: 1.0, large: 0.89, very_large: 0.78} },
+      "Folly Beach": { target_1800_sqft: 2800, tier_multipliers: {small: 1.19, medium: 1.09, standard: 1.0, large: 0.89, very_large: 0.78} },
+      "Georgetown": { target_1800_sqft: 2000, tier_multipliers: {small: 1.19, medium: 1.09, standard: 1.0, large: 0.89, very_large: 0.78} },
+      "Columbia": { target_1800_sqft: 1950, tier_multipliers: {small: 1.19, medium: 1.09, standard: 1.0, large: 0.89, very_large: 0.78} },
+      "Lexington": { target_1800_sqft: 1900, tier_multipliers: {small: 1.19, medium: 1.09, standard: 1.0, large: 0.89, very_large: 0.78} },
+      "Irmo": { target_1800_sqft: 1850, tier_multipliers: {small: 1.19, medium: 1.09, standard: 1.0, large: 0.89, very_large: 0.78} },
+      "Forest Acres": { target_1800_sqft: 2000, tier_multipliers: {small: 1.19, medium: 1.09, standard: 1.0, large: 0.89, very_large: 0.78} },
+      "Greenville": { target_1800_sqft: 1900, tier_multipliers: {small: 1.19, medium: 1.09, standard: 1.0, large: 0.89, very_large: 0.78} },
+      "Spartanburg": { target_1800_sqft: 1750, tier_multipliers: {small: 1.19, medium: 1.09, standard: 1.0, large: 0.89, very_large: 0.78} },
+      "Anderson": { target_1800_sqft: 1700, tier_multipliers: {small: 1.19, medium: 1.09, standard: 1.0, large: 0.89, very_large: 0.78} },
+      "Clemson": { target_1800_sqft: 1950, tier_multipliers: {small: 1.19, medium: 1.09, standard: 1.0, large: 0.89, very_large: 0.78} },
+      "Simpsonville": { target_1800_sqft: 1850, tier_multipliers: {small: 1.19, medium: 1.09, standard: 1.0, large: 0.89, very_large: 0.78} },
+      "Greer": { target_1800_sqft: 1800, tier_multipliers: {small: 1.19, medium: 1.09, standard: 1.0, large: 0.89, very_large: 0.78} },
+      "Default SC": { target_1800_sqft: 2000, tier_multipliers: {small: 1.19, medium: 1.09, standard: 1.0, large: 0.89, very_large: 0.78} }
+    };
+
+    // ========================================
+    // SC COUNTY MILLAGE RATES
+    // ========================================
+    const SC_COUNTY_MILLAGE = {
+      "Abbeville": 0.258, "Aiken": 0.242, "Allendale": 0.285, "Anderson": 0.248, "Bamberg": 0.272,
+      "Barnwell": 0.268, "Beaufort": 0.198, "Berkeley": 0.195, "Calhoun": 0.275, "Charleston": 0.210,
+      "Cherokee": 0.265, "Chester": 0.278, "Chesterfield": 0.282, "Clarendon": 0.290, "Colleton": 0.268,
+      "Darlington": 0.275, "Dillon": 0.288, "Dorchester": 0.205, "Edgefield": 0.255, "Fairfield": 0.295,
+      "Florence": 0.258, "Georgetown": 0.228, "Greenville": 0.235, "Greenwood": 0.262, "Hampton": 0.280,
+      "Horry": 0.195, "Jasper": 0.245, "Kershaw": 0.252, "Lancaster": 0.248, "Laurens": 0.268,
+      "Lee": 0.298, "Lexington": 0.220, "McCormick": 0.270, "Marion": 0.285, "Marlboro": 0.292,
+      "Newberry": 0.265, "Oconee": 0.240, "Orangeburg": 0.275, "Pickens": 0.238, "Richland": 0.245,
+      "Saluda": 0.268, "Spartanburg": 0.252, "Sumter": 0.262, "Union": 0.278, "Williamsburg": 0.288,
+      "York": 0.232
+    };
+
+    // ========================================
+    // STATE VARIABLES
+    // ========================================
+    let insuranceMode = 'auto';
+    let rentMode = 'auto';
+    let taxMode = 'auto';
+    let lastCalculation = null;
+
+    // ========================================
+    // UI HELPERS
+    // ========================================
+    function setInsuranceMode(mode) {
+      insuranceMode = mode;
+      document.querySelectorAll('.toggle-group')[0].querySelectorAll('.toggle-btn').forEach((btn, i) => {
+        btn.classList.toggle('active', (i === 0 && mode === 'auto') || (i === 1 && mode === 'manual'));
+      });
+      document.getElementById('insurance').classList.toggle('hidden', mode === 'auto');
+    }
+
+    function setRentMode(mode) {
+      rentMode = mode;
+      document.querySelectorAll('.toggle-group')[1].querySelectorAll('.toggle-btn').forEach((btn, i) => {
+        btn.classList.toggle('active', (i === 0 && mode === 'auto') || (i === 1 && mode === 'manual'));
+      });
+      document.getElementById('manual-rent').classList.toggle('hidden', mode === 'auto');
+    }
+
+    function setTaxMode(mode) {
+      taxMode = mode;
+      document.querySelectorAll('.toggle-group')[2].querySelectorAll('.toggle-btn').forEach((btn, i) => {
+        btn.classList.toggle('active', (i === 0 && mode === 'auto') || (i === 1 && mode === 'manual'));
+      });
+      document.getElementById('manual-tax').classList.toggle('hidden', mode === 'auto');
+    }
+
+    function toggleNOI() {
+      const noiCalc = document.getElementById('noi-calculator');
+      noiCalc.classList.toggle('hidden');
+    }
+
+    function updateUtilitiesInput() {
+      const mode = document.getElementById('utilities-mode').value;
+      document.getElementById('utilities-input-group').classList.toggle('hidden', mode === 'tenant');
+    }
+
+    // Update downpayment display
+    document.getElementById('downpayment').addEventListener('input', (e) => {
+      document.getElementById('downpayment-display').textContent = e.target.value + '%';
+    });
+
+    // ========================================
+    // CALCULATION FUNCTIONS
+    // ========================================
+
+    function getRentalRate(address, sqft) {
+      const addressUpper = address.toUpperCase();
+
+      // Determine size tier
+      let sizeTier = 'standard';
+      if (sqft < 1000) sizeTier = 'small';
+      else if (sqft < 1500) sizeTier = 'medium';
+      else if (sqft < 2000) sizeTier = 'standard';
+      else if (sqft < 2500) sizeTier = 'large';
+      else sizeTier = 'very_large';
+
+      // Location matching (order matters)
+      const locationChecks = [
+        ['HILTON HEAD', 'Hilton Head'],
+        ['KIAWAH', 'Kiawah'],
+        ['ISLE OF PALMS', 'Isle of Palms'],
+        ['SEABROOK', 'Seabrook'],
+        ['SULLIVANS ISLAND', 'Sullivans Island'],
+        ['FRIPP ISLAND', 'Fripp Island'],
+        ['DANIEL ISLAND', 'Daniel Island'],
+        ['FOLLY BEACH', 'Folly Beach'],
+        ['JAMES ISLAND', 'James Island'],
+        ['WEST ASHLEY', 'West Ashley'],
+        ['MOUNT PLEASANT', 'Mount Pleasant'],
+        ['SUMMERVILLE', 'Summerville'],
+        ['NORTH CHARLESTON', 'North Charleston'],
+        ['CHARLESTON', 'Charleston'],
+        ['NORTH MYRTLE', 'North Myrtle Beach'],
+        ['LITTLE RIVER', 'Little River'],
+        ['SURFSIDE', 'Surfside'],
+        ['MURRELLS INLET', 'Murrells Inlet'],
+        ['PAWLEYS ISLAND', 'Pawleys Island'],
+        ['GARDEN CITY', 'Garden City'],
+        ['MYRTLE BEACH', 'Myrtle Beach'],
+        ['BEAUFORT', 'Beaufort'],
+        ['EDISTO', 'Edisto'],
+        ['GEORGETOWN', 'Georgetown'],
+        ['FOREST ACRES', 'Forest Acres'],
+        ['LEXINGTON', 'Lexington'],
+        ['IRMO', 'Irmo'],
+        ['COLUMBIA', 'Columbia'],
+        ['SIMPSONVILLE', 'Simpsonville'],
+        ['GREER', 'Greer'],
+        ['CLEMSON', 'Clemson'],
+        ['SPARTANBURG', 'Spartanburg'],
+        ['ANDERSON', 'Anderson'],
+        ['GREENVILLE', 'Greenville']
+      ];
+
+      let locationData = SC_RENTAL_RATES['Default SC'];
+      let locationName = 'Default SC';
+
+      for (let [check, name] of locationChecks) {
+        if (addressUpper.includes(check)) {
+          locationData = SC_RENTAL_RATES[name];
+          locationName = name;
+          break;
+        }
+      }
+
+      const baselineRent = locationData.target_1800_sqft;
+      const baselinePerSqft = baselineRent / 1800;
+      const multiplier = locationData.tier_multipliers[sizeTier];
+      const adjustedPerSqft = baselinePerSqft * multiplier;
+      const estimatedRent = Math.round(adjustedPerSqft * sqft);
+
+      return {
+        location: locationName,
+        estimatedRent: estimatedRent,
+        lowEstimate: Math.round(estimatedRent * 0.9),
+        highEstimate: Math.round(estimatedRent * 1.1)
+      };
+    }
+
+    function getCountyMillage(countyName) {
+      const county = countyName.trim().replace(/\s+county$/i, '');
+      return SC_COUNTY_MILLAGE[county] || null;
+    }
+
+    function calculateMonthlyPayment(principal, annualRate, years) {
+      const monthlyRate = annualRate / 12;
+      const numPayments = years * 12;
+
+      if (monthlyRate === 0) return principal / numPayments;
+
+      const payment = principal * (monthlyRate * Math.pow(1 + monthlyRate, numPayments)) /
+                      (Math.pow(1 + monthlyRate, numPayments) - 1);
+      return payment;
+    }
+
+    function calculate() {
+      // Get inputs
+      const street = document.getElementById('street').value;
+      const county = document.getElementById('county').value;
+      const zip = document.getElementById('zip').value;
+      const price = parseFloat(document.getElementById('price').value);
+      const sqft = parseFloat(document.getElementById('sqft').value);
+      const hoa = parseFloat(document.getElementById('hoa').value);
+      const downPaymentPct = parseFloat(document.getElementById('downpayment').value) / 100;
+      const interestRate = parseFloat(document.getElementById('interest').value) / 100;
+      const term = parseFloat(document.getElementById('term').value);
+
+      if (!county || !price || !sqft) {
+        alert('Please fill in County, Purchase Price, and Square Feet');
+        return;
+      }
+
+      const address = `${street}, ${county} County, SC ${zip}`;
+
+      // Calculate loan amount
+      const downPayment = price * downPaymentPct;
+      const loanAmount = price - downPayment;
+
+      // Get rent estimate
+      let monthlyRent;
+      let rentInfo;
+      if (rentMode === 'manual') {
+        monthlyRent = parseFloat(document.getElementById('manual-rent').value);
+        rentInfo = { location: 'Manual', estimatedRent: monthlyRent, lowEstimate: monthlyRent, highEstimate: monthlyRent };
+      } else {
+        rentInfo = getRentalRate(address, sqft);
+        monthlyRent = rentInfo.estimatedRent;
+      }
+
+      // Get insurance
+      const insurance = insuranceMode === 'manual' ?
+        parseFloat(document.getElementById('insurance').value) : 150;
+
+      // Calculate property tax
+      let propertyTaxAnnual, propertyTaxMonthly, countyUsed;
+      if (taxMode === 'manual') {
+        propertyTaxAnnual = parseFloat(document.getElementById('manual-tax').value);
+        propertyTaxMonthly = propertyTaxAnnual / 12;
+        countyUsed = 'Manual';
+      } else {
+        const millageRate = getCountyMillage(county);
+        if (!millageRate) {
+          alert(`County "${county}" not found. Please check spelling or use Manual tax mode.`);
+          return;
+        }
+        const assessmentRatio = 0.06;
+        const taxableValue = price * assessmentRatio;
+        propertyTaxAnnual = taxableValue * millageRate;
+        propertyTaxMonthly = propertyTaxAnnual / 12;
+        countyUsed = county;
+      }
+
+      // Calculate monthly payment
+      const monthlyPayment = calculateMonthlyPayment(loanAmount, interestRate, term);
+
+      // Calculate operating expenses
+      const operatingExpenses = propertyTaxMonthly + insurance + hoa;
+
+      // Calculate NOI
+      const noiMonthly = monthlyRent - operatingExpenses;
+      const noiAnnual = noiMonthly * 12;
+
+      // Calculate DSCR
+      const annualDebtService = monthlyPayment * 12;
+      const dscr = annualDebtService > 0 ? noiAnnual / annualDebtService : 0;
+
+      // Risk label
+      let riskLabel, riskClass;
+      if (dscr >= 1.25) {
+        riskLabel = 'Excellent';
+        riskClass = 'badge-success';
+      } else if (dscr >= 1.0) {
+        riskLabel = 'Good';
+        riskClass = 'badge-success';
+      } else {
+        riskLabel = 'Borderline';
+        riskClass = 'badge-warning';
+      }
+
+      // Calculate cashflow
+      const cashflow = noiMonthly - monthlyPayment;
+
+      // Store calculation for NOI
+      lastCalculation = {
+        monthlyRent,
+        propertyTaxMonthly,
+        insurance,
+        hoa,
+        sqft
+      };
+
+      // Display results
+      const cashflowColor = cashflow >= 0 ? '#28a745' : '#dc3545';
+      const cashflowText = cashflow >= 0 ? 'Positive' : 'Negative';
+
+      document.getElementById('results-content').innerHTML = `
+        <div class="result-card">
+          <div class="result-label">DSCR</div>
+          <div class="result-value">${dscr.toFixed(2)}</div>
+          <span class="badge ${riskClass}">✓ ${riskLabel}</span>
+        </div>
+        <div class="result-card">
+          <div class="result-label">Est. Monthly Rent</div>
+          <div class="result-value">$${monthlyRent.toLocaleString()}</div>
+          <div class="result-caption">Range: $${rentInfo.lowEstimate.toLocaleString()}-$${rentInfo.highEstimate.toLocaleString()}</div>
+        </div>
+        <div class="result-card">
+          <div class="result-label">Monthly Cashflow</div>
+          <div class="result-value" style="color: ${cashflowColor}">$${Math.abs(cashflow).toLocaleString()}</div>
+          <div style="color: ${cashflowColor}; font-weight: 500; font-size: 0.9rem;">${cashflowText}</div>
+          <div class="result-caption">After mortgage, taxes, insurance, and HOA</div>
+        </div>
+        <div class="result-card">
+          <div class="result-label">Annual Taxes</div>
+          <div class="result-value">$${propertyTaxAnnual.toLocaleString(undefined, {maximumFractionDigits: 0})}</div>
+          <div class="result-caption">${countyUsed} County</div>
+        </div>
+      `;
+
+      document.getElementById('results').classList.remove('hidden');
+      document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function calculateNOI() {
+      if (!lastCalculation) {
+        alert('Please calculate DSCR first');
+        return;
+      }
+
+      const vacancy = parseFloat(document.getElementById('vacancy').value) / 100;
+      const maintenance = parseFloat(document.getElementById('maintenance').value) / 100;
+      const utilitiesMode = document.getElementById('utilities-mode').value;
+
+      // Calculate utilities
+      let utilities = 0;
+      if (utilitiesMode === 'owner') {
+        const manualUtilities = parseFloat(document.getElementById('utilities').value);
+        if (manualUtilities > 0) {
+          utilities = manualUtilities;
+        } else {
+          // Auto-estimate
+          const sqft = lastCalculation.sqft || 1500;
+          utilities = Math.max(75, Math.min(350, sqft * 0.16));
+        }
+      }
+
+      // Calculate effective gross income
+      const effectiveGrossIncome = lastCalculation.monthlyRent * (1 - vacancy);
+
+      // Calculate maintenance
+      const maintenanceMonthly = lastCalculation.monthlyRent * maintenance;
+
+      // Total operating expenses
+      const totalOperatingExpenses = lastCalculation.propertyTaxMonthly +
+                                     lastCalculation.insurance +
+                                     lastCalculation.hoa +
+                                     maintenanceMonthly +
+                                     utilities;
+
+      // NOI
+      const noiMonthly = effectiveGrossIncome - totalOperatingExpenses;
+      const noiAnnual = noiMonthly * 12;
+
+      // Display NOI results
+      document.getElementById('noi-results-content').innerHTML = `
+        <div class="result-card">
+          <div class="result-label">Monthly NOI</div>
+          <div class="result-value">$${noiMonthly.toLocaleString(undefined, {maximumFractionDigits: 0})}</div>
+        </div>
+        <div class="result-card">
+          <div class="result-label">Annual NOI</div>
+          <div class="result-value">$${noiAnnual.toLocaleString(undefined, {maximumFractionDigits: 0})}</div>
+        </div>
+        <div class="result-card">
+          <div class="result-label">Operating Expenses</div>
+          <div class="result-value">$${totalOperatingExpenses.toLocaleString(undefined, {maximumFractionDigits: 0})}</div>
+          <div class="result-caption">/month</div>
+        </div>
+        <div class="result-card">
+          <div class="result-label">Assumptions</div>
+          <div style="font-size: 0.85rem; margin-top: 0.5rem;">
+            <div>Vacancy: ${(vacancy * 100).toFixed(1)}%</div>
+            <div>Maintenance: ${(maintenance * 100).toFixed(1)}%</div>
+            <div>Utilities: $${utilities.toFixed(0)}/mo</div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('noi-results').classList.remove('hidden');
+    }
+  </script>
+
+</body>
+</html>
