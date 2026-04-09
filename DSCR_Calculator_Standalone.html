@@ -25,7 +25,7 @@
     }
 
     .header {
-      background: linear-gradient(135deg, #8b0000 0%, #5d0000 100%);
+      background: linear-gradient(135deg, #dc143c 0%, #a8001f 100%);
       color: white;
       text-align: center;
       padding: 2rem 1rem;
@@ -55,7 +55,7 @@
       font-size: 1.25rem;
       font-weight: 600;
       margin-bottom: 1rem;
-      color: #8b0000;
+      color: #dc143c;
     }
 
     .input-grid {
@@ -90,7 +90,7 @@
     input:focus,
     select:focus {
       outline: none;
-      border-color: #8b0000;
+      border-color: #dc143c;
     }
 
     input[type="range"] {
@@ -114,13 +114,13 @@
     }
 
     .toggle-btn.active {
-      background: #8b0000;
+      background: #dc143c;
       color: white;
-      border-color: #8b0000;
+      border-color: #dc143c;
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, #8b0000 0%, #5d0000 100%);
+      background: linear-gradient(135deg, #dc143c 0%, #a8001f 100%);
       color: white;
       padding: 1rem 2rem;
       border: none;
@@ -134,7 +134,7 @@
 
     .btn-primary:hover {
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(139, 0, 0, 0.3);
+      box-shadow: 0 4px 12px rgba(220, 20, 60, 0.3);
     }
 
     .results-grid {
@@ -190,7 +190,7 @@
     .phone-button {
       display: block;
       text-align: center;
-      background: linear-gradient(135deg, #8b0000 0%, #5d0000 100%);
+      background: linear-gradient(135deg, #dc143c 0%, #a8001f 100%);
       color: white;
       padding: 1rem 2rem;
       border-radius: 8px;
@@ -351,7 +351,7 @@
         <a href="tel:8433144104" class="phone-button">📞 Click here to get a quote from BrickWood Mortgage</a>
 
         <div class="noi-section">
-          <button class="btn-primary" onclick="toggleNOI()" style="background: linear-gradient(135deg, #8b0000 0%, #5d0000 100%);">
+          <button class="btn-primary" onclick="toggleNOI()" style="background: linear-gradient(135deg, #dc143c 0%, #a8001f 100%);">
             📊 Calculate Additional Investment Metrics
           </button>
 
@@ -383,7 +383,7 @@
               <input type="number" id="utilities" value="0" step="25">
             </div>
 
-            <button class="btn-primary" onclick="calculateNOI()" style="margin-top: 1rem; background: linear-gradient(135deg, #8b0000 0%, #5d0000 100%);">
+            <button class="btn-primary" onclick="calculateNOI()" style="margin-top: 1rem; background: linear-gradient(135deg, #dc143c 0%, #a8001f 100%);">
               Calculate NOI
             </button>
 
@@ -768,7 +768,7 @@
       };
 
       // Display results
-      const cashflowColor = cashflow >= 0 ? '#28a745' : '#8b0000';
+      const cashflowColor = cashflow >= 0 ? '#28a745' : '#dc143c';
       const cashflowText = cashflow >= 0 ? 'Positive' : 'Negative';
 
       document.getElementById('results-content').innerHTML = `
@@ -869,7 +869,7 @@
   </script>
 
   <div class="disclaimer">
-    This calculator is for illustrative purposes only. All estimates — including rent, taxes, insurance, utilities, and DSCR — are approximations and may not reflect actual values. This does not constitute a loan commitment, pre-approval, or financial advice. Consult a licensed professional before making any investment or financing decision. BrickWood Mortgage Inc. | NMLS #189497 | Equal Housing Lender | <a href="https://nmlsconsumeraccess.org" target="_blank" style="color: #8b0000;">nmlsconsumeraccess.org</a>
+    This calculator is for illustrative purposes only. All estimates — including rent, taxes, insurance, utilities, and DSCR — are approximations and may not reflect actual values. This does not constitute a loan commitment, pre-approval, or financial advice. Consult a licensed professional before making any investment or financing decision. BrickWood Mortgage Inc. | NMLS #189497 | Equal Housing Lender | <a href="https://nmlsconsumeraccess.org" target="_blank" style="color: #dc143c;">nmlsconsumeraccess.org</a>
   </div>
 
 </body>
