@@ -260,8 +260,8 @@
           <input type="text" id="county" placeholder="Horry">
         </div>
         <div class="input-group">
-          <label for="zip">Zip Code</label>
-          <input type="text" id="zip" placeholder="29577">
+          <label for="zip">Zip Code (Optional)</label>
+          <input type="text" id="zip" placeholder="29577" oninput="autoFillCounty()">
         </div>
       </div>
 
@@ -447,6 +447,61 @@
     };
 
     // ========================================
+    // SC ZIP CODE TO COUNTY MAPPING
+    // ========================================
+    const SC_ZIP_TO_COUNTY = {
+      // Horry County (Myrtle Beach area)
+      "29526": "Horry", "29527": "Horry", "29544": "Horry", "29554": "Horry", "29566": "Horry",
+      "29568": "Horry", "29569": "Horry", "29572": "Horry", "29575": "Horry", "29576": "Horry",
+      "29577": "Horry", "29578": "Horry", "29579": "Horry", "29582": "Horry", "29585": "Horry",
+      "29588": "Horry", "29587": "Horry", "29597": "Horry",
+      // Charleston County
+      "29401": "Charleston", "29402": "Charleston", "29403": "Charleston", "29404": "Charleston",
+      "29405": "Charleston", "29406": "Charleston", "29407": "Charleston", "29409": "Charleston",
+      "29410": "Charleston", "29412": "Charleston", "29414": "Charleston", "29418": "Charleston",
+      "29419": "Charleston", "29420": "Charleston", "29422": "Charleston", "29423": "Charleston",
+      "29424": "Charleston", "29425": "Charleston", "29426": "Charleston", "29429": "Charleston",
+      "29455": "Charleston", "29456": "Charleston", "29457": "Charleston", "29464": "Charleston",
+      "29466": "Charleston", "29469": "Charleston", "29470": "Charleston", "29487": "Charleston",
+      // Beaufort County
+      "29901": "Beaufort", "29902": "Beaufort", "29906": "Beaufort", "29907": "Beaufort",
+      "29909": "Beaufort", "29910": "Beaufort", "29920": "Beaufort", "29926": "Beaufort",
+      "29928": "Beaufort", "29938": "Beaufort", "29940": "Beaufort", "29945": "Beaufort",
+      // Greenville County
+      "29601": "Greenville", "29602": "Greenville", "29605": "Greenville", "29607": "Greenville",
+      "29609": "Greenville", "29611": "Greenville", "29615": "Greenville", "29617": "Greenville",
+      "29650": "Greenville", "29651": "Greenville", "29673": "Greenville", "29680": "Greenville",
+      "29681": "Greenville", "29687": "Greenville", "29690": "Greenville",
+      // Richland County (Columbia)
+      "29201": "Richland", "29203": "Richland", "29204": "Richland", "29205": "Richland",
+      "29206": "Richland", "29209": "Richland", "29210": "Richland", "29212": "Richland",
+      "29223": "Richland", "29229": "Richland",
+      // Lexington County
+      "29072": "Lexington", "29073": "Lexington", "29169": "Lexington", "29170": "Lexington",
+      "29172": "Lexington", "29063": "Lexington", "29016": "Lexington",
+      // Spartanburg County
+      "29301": "Spartanburg", "29302": "Spartanburg", "29303": "Spartanburg", "29306": "Spartanburg",
+      "29307": "Spartanburg", "29316": "Spartanburg", "29319": "Spartanburg", "29349": "Spartanburg",
+      // York County
+      "29702": "York", "29707": "York", "29710": "York", "29715": "York", "29730": "York",
+      "29732": "York", "29745": "York",
+      // Georgetown County
+      "29440": "Georgetown", "29442": "Georgetown", "29526": "Georgetown", "29585": "Georgetown",
+      // Berkeley County
+      "29445": "Berkeley", "29461": "Berkeley", "29472": "Berkeley", "29483": "Berkeley",
+      // Dorchester County
+      "29437": "Dorchester", "29485": "Dorchester", "29486": "Dorchester",
+      // Anderson County
+      "29621": "Anderson", "29624": "Anderson", "29625": "Anderson", "29626": "Anderson",
+      // Pickens County (Clemson)
+      "29630": "Pickens", "29631": "Pickens", "29671": "Pickens", "29678": "Pickens",
+      // Florence County
+      "29501": "Florence", "29505": "Florence", "29506": "Florence",
+      // Sumter County
+      "29150": "Sumter", "29153": "Sumter", "29154": "Sumter"
+    };
+
+    // ========================================
     // STATE VARIABLES
     // ========================================
     let insuranceMode = 'auto';
@@ -495,6 +550,14 @@
     document.getElementById('downpayment').addEventListener('input', (e) => {
       document.getElementById('downpayment-display').textContent = e.target.value + '%';
     });
+
+    // Auto-fill county from zip code
+    function autoFillCounty() {
+      const zip = document.getElementById('zip').value.trim();
+      if (zip.length === 5 && SC_ZIP_TO_COUNTY[zip]) {
+        document.getElementById('county').value = SC_ZIP_TO_COUNTY[zip];
+      }
+    }
 
     // ========================================
     // CALCULATION FUNCTIONS
@@ -575,8 +638,16 @@
     }
 
     function getCountyMillage(countyName) {
-      const county = countyName.trim().replace(/\s+county$/i, '');
-      return SC_COUNTY_MILLAGE[county] || null;
+      // Normalize: trim, remove "county" suffix, remove spaces, capitalize first letter
+      let normalized = countyName.trim()
+        .replace(/\s+county$/i, '')  // Remove "County" suffix
+        .replace(/\s+/g, '')          // Remove all spaces
+        .toLowerCase();               // Convert to lowercase
+
+      // Capitalize first letter
+      normalized = normalized.charAt(0).toUpperCase() + normalized.slice(1);
+
+      return SC_COUNTY_MILLAGE[normalized] || null;
     }
 
     function calculateMonthlyPayment(principal, annualRate, years) {
