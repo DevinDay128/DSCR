@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DSCR Calculator - Embed Instructions for Developers</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem;
+      line-height: 1.6;
+      background: #f5f5f5;
+      color: #333;
+    }
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 2rem;
+      border-radius: 8px;
+      margin-bottom: 2rem;
+    }
+    .header h1 {
+      margin: 0 0 0.5rem 0;
+      font-size: 2rem;
+    }
+    .header p {
+      margin: 0;
+      opacity: 0.95;
+    }
+    .section {
+      background: white;
+      padding: 2rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .section h2 {
+      margin-top: 0;
+      color: #667eea;
+      border-bottom: 2px solid #667eea;
+      padding-bottom: 0.5rem;
+    }
+    .section h3 {
+      color: #764ba2;
+      margin-top: 1.5rem;
+    }
+    code {
+      background: #f4f4f4;
+      padding: 0.2rem 0.4rem;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+      color: #e83e8c;
+    }
+    pre {
+      background: #2d2d2d;
+      color: #f8f8f2;
+      padding: 1.5rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+    pre code {
+      background: none;
+      color: inherit;
+      padding: 0;
+    }
+    .warning {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 1rem;
+      margin: 1rem 0;
+      border-radius: 4px;
+    }
+    .info {
+      background: #d1ecf1;
+      border-left: 4px solid #0c5460;
+      padding: 1rem;
+      margin: 1rem 0;
+      border-radius: 4px;
+    }
+    .success {
+      background: #d4edda;
+      border-left: 4px solid #28a745;
+      padding: 1rem;
+      margin: 1rem 0;
+      border-radius: 4px;
+    }
+    .option-card {
+      border: 2px solid #e0e0e0;
+      padding: 1rem;
+      border-radius: 6px;
+      margin: 1rem 0;
+    }
+    .option-card h4 {
+      margin-top: 0;
+      color: #667eea;
+    }
+    ul {
+      padding-left: 1.5rem;
+    }
+    li {
+      margin-bottom: 0.5rem;
+    }
+    .demo-preview {
+      border: 2px dashed #667eea;
+      padding: 1rem;
+      border-radius: 6px;
+      background: #f9f9f9;
+      text-align: center;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>🏠 DSCR Calculator - Embed Instructions</h1>
+    <p>Developer guide for embedding the BrickWood Mortgage DSCR Calculator on your website</p>
+  </div>
+
+  <!-- STEP 1: GET YOUR URL -->
+  <div class="section">
+    <h2>📋 Step 1: Get Your Streamlit URL</h2>
+    <p>Before embedding, you need your calculator's URL:</p>
+    <ol>
+      <li>Go to <a href="https://share.streamlit.io" target="_blank">share.streamlit.io</a></li>
+      <li>Find your <strong>DSCR Calculator</strong> app</li>
+      <li>Copy the full URL (example: <code>https://devinday128-dscr-app-xyz.streamlit.app</code>)</li>
+    </ol>
+    <div class="warning">
+      <strong>⚠️ Important:</strong> Replace <code>YOUR_STREAMLIT_URL</code> in all code examples below with your actual URL.
+    </div>
+  </div>
+
+  <!-- OPTION 1: SIMPLE IFRAME -->
+  <div class="section">
+    <h2>🎯 Option 1: Simple iframe (Recommended for Most Sites)</h2>
+    <p>Best for: WordPress, Squarespace, Wix, Webflow, or any HTML page.</p>
+
+    <h3>Code to Copy:</h3>
+<pre><code>&lt;iframe
+  src="<strong>YOUR_STREAMLIT_URL</strong>?embedded=true"
+  width="100%"
+  height="900"
+  style="border: none; border-radius: 8px;"
+  title="DSCR Calculator"
+  loading="lazy"
+&gt;&lt;/iframe&gt;</code></pre>
+
+    <div class="info">
+      <strong>📝 Notes:</strong>
+      <ul>
+        <li><code>?embedded=true</code> removes the Streamlit toolbar for a cleaner look</li>
+        <li>Adjust <code>height</code> if content is cut off (try 1000-1200 for mobile)</li>
+        <li><code>loading="lazy"</code> improves page load performance</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- OPTION 2: STYLED CONTAINER -->
+  <div class="section">
+    <h2>🎨 Option 2: Styled Container with Header</h2>
+    <p>Best for: Custom designs, landing pages, or dedicated calculator pages.</p>
+
+    <h3>Full HTML Code:</h3>
+<pre><code>&lt;div style="max-width: 1200px; margin: 2rem auto; padding: 0 1rem;"&gt;
+  &lt;div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white; padding: 2rem; border-radius: 8px; text-align: center;
+              margin-bottom: 1.5rem;"&gt;
+    &lt;h1 style="margin: 0 0 0.5rem 0; font-size: 2rem;"&gt;Investment Property Calculator&lt;/h1&gt;
+    &lt;p style="margin: 0; opacity: 0.95;"&gt;Calculate DSCR and rental estimates for South Carolina properties&lt;/p&gt;
+  &lt;/div&gt;
+
+  &lt;div style="background: white; border-radius: 12px; overflow: hidden;
+              box-shadow: 0 8px 32px rgba(0,0,0,0.12);"&gt;
+    &lt;iframe
+      src="<strong>YOUR_STREAMLIT_URL</strong>?embedded=true"
+      width="100%"
+      height="950"
+      style="border: none;"
+      title="DSCR Calculator"
+      loading="lazy"
+    &gt;&lt;/iframe&gt;
+  &lt;/div&gt;
+
+  &lt;p style="text-align: center; color: #888; font-size: 0.85rem; margin-top: 1rem;"&gt;
+    Results are estimates. Contact BrickWood Mortgage for official loan terms.
+  &lt;/p&gt;
+&lt;/div&gt;</code></pre>
+  </div>
+
+  <!-- OPTION 3: RESPONSIVE -->
+  <div class="section">
+    <h2>📱 Option 3: Fully Responsive Embed</h2>
+    <p>Best for: Mobile-optimized sites that need different heights on mobile vs desktop.</p>
+
+    <h3>HTML + CSS Code:</h3>
+<pre><code>&lt;style&gt;
+  .dscr-calculator-wrapper {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+  }
+
+  .dscr-calculator-frame {
+    width: 100%;
+    height: 950px;
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  }
+
+  /* Mobile adjustments */
+  @media (max-width: 768px) {
+    .dscr-calculator-frame {
+      height: 1200px; /* Taller for mobile */
+    }
+  }
+&lt;/style&gt;
+
+&lt;div class="dscr-calculator-wrapper"&gt;
+  &lt;iframe
+    class="dscr-calculator-frame"
+    src="<strong>YOUR_STREAMLIT_URL</strong>?embedded=true"
+    title="DSCR Calculator"
+    loading="lazy"
+  &gt;&lt;/iframe&gt;
+&lt;/div&gt;</code></pre>
+  </div>
+
+  <!-- PLATFORM-SPECIFIC INSTRUCTIONS -->
+  <div class="section">
+    <h2>🔧 Platform-Specific Instructions</h2>
+
+    <div class="option-card">
+      <h4>WordPress</h4>
+      <ol>
+        <li>Edit page/post</li>
+        <li>Add a <strong>Custom HTML</strong> block</li>
+        <li>Paste the iframe code from Option 1</li>
+        <li>Update & Publish</li>
+      </ol>
+    </div>
+
+    <div class="option-card">
+      <h4>Squarespace / Wix / Weebly</h4>
+      <ol>
+        <li>Add an <strong>Embed</strong> or <strong>Code</strong> block</li>
+        <li>Paste the iframe code from Option 1</li>
+        <li>Save & Publish</li>
+      </ol>
+    </div>
+
+    <div class="option-card">
+      <h4>Webflow</h4>
+      <ol>
+        <li>Add an <strong>Embed</strong> element</li>
+        <li>Paste the iframe code from Option 1</li>
+        <li>Publish site</li>
+      </ol>
+    </div>
+
+    <div class="option-card">
+      <h4>React / Next.js</h4>
+<pre><code>export default function DSCRCalculator() {
+  return (
+    &lt;iframe
+      src="YOUR_STREAMLIT_URL?embedded=true"
+      width="100%"
+      height="950px"
+      style={{ border: 'none', borderRadius: '8px' }}
+      title="DSCR Calculator"
+      loading="lazy"
+    /&gt;
+  );
+}</code></pre>
+    </div>
+  </div>
+
+  <!-- TROUBLESHOOTING -->
+  <div class="section">
+    <h2>🛠️ Troubleshooting</h2>
+
+    <h3>Calculator is cut off / not fully visible</h3>
+    <p>Increase the <code>height</code> value in the iframe. Try:</p>
+    <ul>
+      <li>Desktop: 900-1000px</li>
+      <li>Mobile: 1200-1400px</li>
+    </ul>
+
+    <h3>Calculator shows "Unable to load"</h3>
+    <ul>
+      <li>Verify your Streamlit URL is correct and the app is running</li>
+      <li>Check that the URL includes <code>?embedded=true</code></li>
+      <li>Make sure the Streamlit app is set to <strong>Public</strong> in settings</li>
+    </ul>
+
+    <h3>Calculator loads slowly</h3>
+    <ul>
+      <li>Keep the <code>loading="lazy"</code> attribute (loads when user scrolls to it)</li>
+      <li>Place the calculator lower on the page if possible</li>
+      <li>Consider adding a loading message while iframe loads</li>
+    </ul>
+
+    <h3>Scrolling issues on mobile</h3>
+    <p>Add this attribute to your iframe:</p>
+    <code>scrolling="yes"</code>
+  </div>
+
+  <!-- ADVANCED -->
+  <div class="section">
+    <h2>⚡ Advanced Options</h2>
+
+    <h3>Pass URL Parameters (Pre-fill Values)</h3>
+    <p>You can pre-fill calculator values via URL parameters:</p>
+<pre><code>YOUR_STREAMLIT_URL?embedded=true&purchase_price=500000&sqft=2000</code></pre>
+    <p><em>Note: Check with your developer if the Streamlit app supports URL parameters.</em></p>
+
+    <h3>Add Loading Spinner</h3>
+    <p>Show a spinner while the calculator loads:</p>
+<pre><code>&lt;div id="calculator-loading" style="text-align: center; padding: 3rem;"&gt;
+  &lt;div style="border: 4px solid #f3f3f3; border-top: 4px solid #667eea;
+              border-radius: 50%; width: 40px; height: 40px;
+              animation: spin 1s linear infinite; margin: 0 auto;"&gt;&lt;/div&gt;
+  &lt;p&gt;Loading calculator...&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;iframe
+  src="YOUR_STREAMLIT_URL?embedded=true"
+  onload="document.getElementById('calculator-loading').style.display='none'"
+  width="100%"
+  height="950"
+  style="border: none;"
+&gt;&lt;/iframe&gt;
+
+&lt;style&gt;
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+&lt;/style&gt;</code></pre>
+  </div>
+
+  <!-- FINAL CHECKLIST -->
+  <div class="section">
+    <h2>✅ Pre-Launch Checklist</h2>
+    <div class="success">
+      <strong>Before going live, verify:</strong>
+      <ul style="margin-bottom: 0;">
+        <li>✓ Streamlit URL is correct and app is Public</li>
+        <li>✓ <code>?embedded=true</code> is included in the src URL</li>
+        <li>✓ Calculator displays correctly on desktop</li>
+        <li>✓ Calculator displays correctly on mobile (check height)</li>
+        <li>✓ All inputs work (address, purchase price, etc.)</li>
+        <li>✓ Results calculate correctly</li>
+        <li>✓ Phone number button works</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- DEMO PREVIEW -->
+  <div class="section">
+    <h2>👀 Live Preview Example</h2>
+    <p>Once embedded, your calculator will look like this:</p>
+    <div class="demo-preview">
+      <p style="margin: 2rem 0;"><strong>[Your DSCR Calculator will appear here]</strong></p>
+      <p style="font-size: 0.9rem; color: #999;">Replace YOUR_STREAMLIT_URL in the code above to see the live calculator</p>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div style="text-align: center; padding: 2rem 0; color: #888; font-size: 0.9rem;">
+    <p>Questions? Contact your web developer or BrickWood Mortgage.</p>
+    <p style="margin-top: 0.5rem;">Generated by BrickWood Mortgage DSCR Calculator</p>
+  </div>
+
+</body>
+</html>
